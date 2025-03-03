@@ -21,22 +21,6 @@ services:
     stdin_open: true
     env_file:
       - .env.docker
-    depends_on:
-      - db
-
-  db:
-    image: postgres:17
-    container_name: remote-attendance-db
-    ports:
-      - "5432:5432"
-    environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
-      - POSTGRES_DB=remote-attendance
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    restart: always
 
 volumes:
   node_modules:
-  postgres_data:
