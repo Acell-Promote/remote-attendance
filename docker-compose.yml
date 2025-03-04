@@ -15,7 +15,6 @@ services:
         target: /app/node_modules
     environment:
       - WATCHPACK_POLLING=true
-    command: sh -c "npm run dev"
     restart: always
     tty: true
     stdin_open: true
