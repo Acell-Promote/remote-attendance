@@ -9,18 +9,23 @@ COPY package.json pnpm-lock.yaml* ./
 
 # Clear cache and install dependencies with exact versions
 RUN corepack enable pnpm && \
-  pnpm store prune && \
   pnpm install --frozen-lockfile
 
-# COPY src ./src
-COPY public ./public
-COPY next.config.ts .
-COPY tsconfig.json .
+# Copy all application files
+COPY . .
 
+# Generate Prisma client
+RUN npx prisma generate
 
 # Set environment variables for development
 ENV NODE_ENV=development
 ENV HOSTNAME="0.0.0.0"
+ENV PATH /app/node_modules/.bin:$PATH
+
 EXPOSE 3000
 
-CMD ["pnpm", "dev"]
+# Clean any previous builds
+RUN rm -rf .next
+
+# The seed script will be run when the container starts
+CMD ["sh", "-c", "npx prisma db push && npx ts-node --compiler-options '{\"module\":\"CommonJS\"}' scripts/seed.ts && pnpm dev"]
