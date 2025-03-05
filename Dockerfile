@@ -14,7 +14,7 @@ RUN corepack enable pnpm && \
 
 # COPY src ./src
 COPY public ./public
-COPY next.config.ts .
+COPY next.config.mjs .
 COPY tsconfig.json .
 
 
