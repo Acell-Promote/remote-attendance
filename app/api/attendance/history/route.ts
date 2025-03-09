@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import {
   checkAuth,
-  createSuccessResponse,
+  createApiResponse,
   createErrorResponse,
 } from "@/lib/api-utils";
 
@@ -20,7 +20,7 @@ export async function GET() {
       },
     });
 
-    return createSuccessResponse({ records });
+    return createApiResponse({ records });
   } catch (error) {
     return createErrorResponse(error);
   }

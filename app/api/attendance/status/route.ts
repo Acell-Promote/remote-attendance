@@ -1,9 +1,10 @@
 import { NextRequest } from "next/server";
-import prisma from "lib/prisma";
+import prisma from "@/lib/prisma";
 import {
   checkAuth,
-  createSuccessResponse,
+  createApiResponse,
   createErrorResponse,
+  unauthorizedResponse,
 } from "@/lib/api-utils";
 
 export async function GET(request: NextRequest) {
@@ -19,7 +20,7 @@ export async function GET(request: NextRequest) {
     // Check if the user is currently clocked in (has a record with no clock out)
     const isActive = lastRecord && lastRecord.clockOut === null;
 
-    return createSuccessResponse({
+    return createApiResponse({
       isActive,
       lastClockIn: isActive ? lastRecord.clockIn : null,
     });
