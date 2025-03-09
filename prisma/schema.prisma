@@ -14,14 +14,17 @@ datasource db {
 }
 
 model User {
-  id          String       @id @default(uuid())
-  name        String?
-  email       String       @unique
-  password    String
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
-  attendances Attendance[]
-  Report      Report[]
+  id              String       @id @default(uuid())
+  name            String?
+  email           String       @unique
+  password        String
+  role            Role         @default(USER)
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  attendances     Attendance[]
+  reports         Report[]     @relation("UserReports")
+  reviewedReports Report[]     @relation("ReviewedReports")
+  comments        Comment[]
 }
 
 enum Role {
@@ -39,10 +42,34 @@ model Attendance {
   user      User      @relation(fields: [userId], references: [id])
 }
 
+enum ReportStatus {
+  DRAFT
+  SUBMITTED
+  REVIEWED
+}
+
 model Report {
+  id         String       @id @default(uuid())
+  userId     String
+  user       User         @relation("UserReports", fields: [userId], references: [id])
+  date       DateTime     @default(now())
+  content    String       @db.Text
+  status     ReportStatus @default(DRAFT)
+  reviewerId String?
+  reviewer   User?        @relation("ReviewedReports", fields: [reviewerId], references: [id])
+  comments   Comment[]
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+  title      String
+}
+
+model Comment {
   id        String   @id @default(uuid())
+  reportId  String
+  report    Report   @relation(fields: [reportId], references: [id])
   userId    String
   user      User     @relation(fields: [userId], references: [id])
   content   String
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
