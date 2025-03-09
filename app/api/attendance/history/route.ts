@@ -1,18 +1,14 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import prisma from "@/lib/prisma";
+import {
+  checkAuth,
+  createApiResponse,
+  createErrorResponse,
+} from "@/lib/api-utils";
 
 export async function GET() {
   try {
-    const session = await getServerSession(authOptions);
-
-    if (!session || !session.user) {
-      return NextResponse.json(
-        { message: "認証されていません" },
-        { status: 401 }
-      );
-    }
+    const session = await checkAuth();
 
     // Get all attendance records for the user, sorted by clockIn date (newest first)
     const records = await prisma.attendance.findMany({
@@ -24,12 +20,8 @@ export async function GET() {
       },
     });
 
-    return NextResponse.json({ records });
+    return createApiResponse({ records });
   } catch (error) {
-    console.error("Error fetching attendance history:", error);
-    return NextResponse.json(
-      { message: "出勤履歴の取得中にエラーが発生しました" },
-      { status: 500 }
-    );
+    return createErrorResponse(error);
   }
 }

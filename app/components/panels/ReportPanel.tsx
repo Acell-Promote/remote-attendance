@@ -1,204 +1,212 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
+import ReportEditor from "../reports/ReportEditor";
+import ReportList from "../reports/ReportList";
+import ReportViewer from "../reports/ReportViewer";
+import { ApiResponse, PaginatedResponse } from "@/app/types/api";
+import type { ReportWithRelations } from "@/app/types/report";
+import { ReportStatus } from "@/app/types/report";
+import { apiRequest } from "@/lib/api-client";
 
-interface AttendanceRecord {
+interface User {
+  name: string | null;
+  email: string;
+}
+
+interface Comment {
   id: string;
-  userId: string;
-  clockIn: string;
-  clockOut: string | null;
+  content: string;
   createdAt: string;
-  updatedAt: string;
+  user: User;
 }
 
-interface ReportData {
-  records: AttendanceRecord[];
-  totalHours: number;
+interface ReportFormData {
+  title: string;
+  date: string;
+  content: string;
+  status: ReportStatus;
 }
+
+// Constants
+const REPORTS_PER_PAGE = 10;
 
 export default function ReportPanel() {
   const { data: session } = useSession();
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
-  const [reportData, setReportData] = useState<ReportData | null>(null);
+  const [view, setView] = useState<"list" | "editor" | "viewer">("list");
+  const [reports, setReports] = useState<ReportWithRelations[]>([]);
+  const [selectedReport, setSelectedReport] =
+    useState<ReportWithRelations | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
 
-  const handleGenerateReport = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!startDate || !endDate) {
-      setError("開始日と終了日の両方を選択してください");
-      return;
-    }
-
+  const fetchReports = async () => {
     setLoading(true);
     setError("");
 
     try {
-      const response = await fetch(
-        `/api/report?startDate=${startDate}&endDate=${endDate}`
+      const data = await apiRequest<PaginatedResponse<ReportWithRelations>>(
+        "/api/reports",
+        {
+          params: { page, limit: REPORTS_PER_PAGE },
+        }
       );
-
-      if (response.ok) {
-        const data = await response.json();
-        setReportData(data);
-      } else {
-        const errorData = await response.json();
-        setError(errorData.message || "レポート生成に失敗しました");
-      }
+      setReports(data.reports || []);
+      setTotal(data.total || 0);
     } catch (error) {
-      console.error("Error generating report:", error);
-      setError("エラーが発生しました。もう一度お試しください。");
+      setError(error instanceof Error ? error.message : "エラーが発生しました");
     } finally {
       setLoading(false);
     }
   };
 
-  const formatDateTime = (dateString: string) => {
-    if (!dateString) return "N/A";
-    const date = new Date(dateString);
-    return date.toLocaleString("ja-JP", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
+  useEffect(() => {
+    fetchReports();
+  }, [page]);
+
+  const handleCreateReport = async (data: ReportFormData) => {
+    try {
+      await apiRequest<ApiResponse<ReportWithRelations>>("/api/reports", {
+        method: "POST",
+        body: JSON.stringify(data),
+      });
+      setView("list");
+      fetchReports();
+    } catch (error) {
+      throw error;
+    }
   };
 
-  const calculateDuration = (clockIn: string, clockOut: string | null) => {
-    if (!clockOut) return "進行中";
+  const handleSaveDraft = async (data: ReportFormData) => {
+    try {
+      await apiRequest<ApiResponse<ReportWithRelations>>("/api/reports", {
+        method: "POST",
+        body: JSON.stringify({ ...data, status: ReportStatus.DRAFT }),
+      });
+    } catch (error) {
+      console.error("Error saving draft:", error);
+    }
+  };
 
-    const start = new Date(clockIn).getTime();
-    const end = new Date(clockOut).getTime();
-    const diffMs = end - start;
-    const diffHrs = Math.floor(diffMs / (1000 * 60 * 60));
-    const diffMins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+  const handleAddComment = async (content: string) => {
+    if (!selectedReport) return;
 
-    return `${diffHrs}時間 ${diffMins}分`;
+    try {
+      await apiRequest(`/api/reports/${selectedReport.id}/comments`, {
+        method: "POST",
+        body: JSON.stringify({ content }),
+      });
+
+      // Refresh the selected report
+      const reportData = await apiRequest<ApiResponse<ReportWithRelations>>(
+        `/api/reports/${selectedReport.id}`
+      );
+      if (reportData.data) {
+        setSelectedReport(reportData.data);
+      }
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  const handleStatusChange = async (status: ReportStatus) => {
+    if (!selectedReport) return;
+
+    try {
+      const result = await apiRequest<ApiResponse<ReportWithRelations>>(
+        `/api/reports/${selectedReport.id}`,
+        {
+          method: "PUT",
+          body: JSON.stringify({
+            id: selectedReport.id,
+            status,
+            content: selectedReport.content,
+            title: selectedReport.title,
+          }),
+        }
+      );
+      if (result.data) {
+        setSelectedReport(result.data);
+        fetchReports();
+      }
+    } catch (error) {
+      throw error;
+    }
   };
 
   return (
-    <div className="bg-white shadow rounded-lg p-6">
-      <h2 className="text-xl font-semibold text-gray-800 mb-6">勤怠レポート</h2>
-
-      <form onSubmit={handleGenerateReport} className="mb-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-          <div>
-            <label
-              htmlFor="startDate"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              開始日
-            </label>
-            <input
-              type="date"
-              id="startDate"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-              className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-              required
-            />
-          </div>
-          <div>
-            <label
-              htmlFor="endDate"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              終了日
-            </label>
-            <input
-              type="date"
-              id="endDate"
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-              className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-              required
-            />
-          </div>
-        </div>
-
-        {error && (
-          <div className="bg-red-50 border border-red-200 rounded-md p-4 mb-4">
-            <p className="text-red-800">{error}</p>
-          </div>
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h2 className="text-xl font-semibold text-gray-800">日報管理</h2>
+        {view === "list" ? (
+          <button
+            onClick={() => setView("editor")}
+            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+          >
+            新規作成
+          </button>
+        ) : (
+          <button
+            onClick={() => setView("list")}
+            className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+          >
+            一覧に戻る
+          </button>
         )}
+      </div>
 
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-4 rounded-md font-medium disabled:bg-indigo-400"
-        >
-          {loading ? "生成中..." : "レポート生成"}
-        </button>
-      </form>
-
-      {reportData && (
-        <div>
-          <div className="bg-indigo-50 border border-indigo-200 rounded-md p-4 mb-4">
-            <p className="text-indigo-800 font-medium">
-              合計時間: {reportData.totalHours.toFixed(2)}
-            </p>
-            <p className="text-indigo-600">
-              記録数: {reportData.records.length}
-            </p>
-          </div>
-
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th
-                    scope="col"
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                  >
-                    日付
-                  </th>
-                  <th
-                    scope="col"
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                  >
-                    出勤時間
-                  </th>
-                  <th
-                    scope="col"
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                  >
-                    退勤時間
-                  </th>
-                  <th
-                    scope="col"
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                  >
-                    勤務時間
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {reportData.records.map((record) => (
-                  <tr key={record.id}>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {new Date(record.clockIn).toLocaleDateString("ja-JP")}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {formatDateTime(record.clockIn)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {record.clockOut
-                        ? formatDateTime(record.clockOut)
-                        : "進行中"}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {calculateDuration(record.clockIn, record.clockOut)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+      {error && (
+        <div className="rounded-md bg-red-50 p-4">
+          <div className="flex">
+            <div className="ml-3">
+              <h3 className="text-sm font-medium text-red-800">{error}</h3>
+            </div>
           </div>
         </div>
+      )}
+
+      {loading ? (
+        <div className="flex justify-center">
+          <div className="text-gray-500">読み込み中...</div>
+        </div>
+      ) : (
+        <>
+          {view === "list" && (
+            <ReportList
+              reports={reports}
+              total={total}
+              currentPage={page}
+              onPageChange={setPage}
+              onReportClick={(report) => {
+                setSelectedReport(report);
+                setView("viewer");
+              }}
+            />
+          )}
+
+          {view === "editor" && (
+            <ReportEditor
+              onSubmit={async (data) => {
+                await handleCreateReport({
+                  ...data,
+                  status: ReportStatus.SUBMITTED,
+                });
+              }}
+              onSaveDraft={handleSaveDraft}
+            />
+          )}
+
+          {view === "viewer" && selectedReport && (
+            <ReportViewer
+              report={selectedReport}
+              onAddComment={handleAddComment}
+              onStatusChange={handleStatusChange}
+            />
+          )}
+        </>
       )}
     </div>
   );

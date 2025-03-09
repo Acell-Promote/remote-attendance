@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "seed": "ts-node --compiler-options {\"module\":\"CommonJS\"} prisma/seed.ts"
+    "seed": "ts-node --compiler-options '{\"module\":\"CommonJS\"}' scripts/seed.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.4.1",
@@ -18,7 +18,8 @@
     "next-auth": "^4.24.11",
     "postcss": "^8.5.3",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "zod": "^3.24.2"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
@@ -35,7 +36,7 @@
     "ts-node": "^10.9.2",
     "typescript": "^5"
   },
-  "packageManager": "pnpm@10.5.2+sha512.da9dc28cd3ff40d0592188235ab25d3202add8a207afbedc682220e4a0029ffbff4562102b9e6e46b4e3f9e8bd53e6d05de48544b0c57d4b0179e22c76d1199b",
+  "packageManager": "pnpm@10.6.1+sha512.40ee09af407fa9fbb5fbfb8e1cb40fbb74c0af0c3e10e9224d7b53c7658528615b2c92450e74cfad91e3a2dcafe3ce4050d80bda71d757756d2ce2b66213e9a3",
   "pnpm": {
     "onlyBuiltDependencies": [
       "@prisma/client",
@@ -45,5 +46,8 @@
       "prisma",
       "sharp"
     ]
+  },
+  "prisma": {
+    "seed": "ts-node -P scripts/tsconfig.json scripts/seed.ts"
   }
 }
