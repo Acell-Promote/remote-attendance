@@ -1,0 +1,248 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Remote Attendance System Development Guidelines
+
+## Project Structure
+
+### Directory Organization
+
+```
+app/
+├── api/                    # API routes
+│   ├── auth/              # Authentication endpoints
+│   ├── attendance/        # Attendance endpoints
+│   └── reports/          # Daily reports endpoints
+├── components/            # Reusable components
+│   ├── auth/             # Authentication related components
+│   ├── attendance/       # Attendance related components
+│   └── reports/         # Report related components
+├── lib/                  # Shared utilities and configurations
+└── types/               # TypeScript type definitions
+```
+
+## Naming Conventions
+
+### Components
+
+- Use PascalCase for component names
+- Suffix with the component type where applicable
+  - `AttendancePanel.tsx`
+  - `ReportForm.tsx`
+  - `UserProfile.tsx`
+
+### API Routes
+
+- Use kebab-case for API endpoints
+- Group related endpoints in directories
+  ```
+  /api/attendance/clock-in
+  /api/attendance/clock-out
+  /api/reports/daily
+  ```
+
+### Database Models
+
+- Use PascalCase for model names
+- Use camelCase for field names
+
+```prisma
+model User {
+  id        String   @id @default(uuid())
+  name      String?
+  email     String   @unique
+  role      Role     @default(USER)
+}
+
+model Attendance {
+  id        String   @id @default(uuid())
+  userId    String
+  clockIn   DateTime
+  clockOut  DateTime?
+}
+
+model Report {
+  id        String   @id @default(uuid())
+  userId    String
+  date      DateTime
+  content   String
+}
+```
+
+## Implementation Guidelines
+
+### Authentication
+
+- Use NextAuth.js for authentication
+- Implement JWT-based sessions
+- Support email/password authentication
+- Include role-based access control (ADMIN/USER)
+
+### Attendance Management
+
+- Record precise timestamps for clock-in/out
+- Calculate working hours automatically
+- Support viewing attendance history
+- Implement monthly summaries
+- Validate attendance records (no overlapping periods)
+
+### Daily Reports
+
+- One report per user per day
+- Support markdown or rich text content
+- Include submission timestamp
+- Allow editing within the same day
+- Support viewing report history
+
+### Error Handling
+
+- Use consistent error response format:
+
+```typescript
+interface ErrorResponse {
+  message: string;
+  code?: string;
+  details?: Record<string, any>;
+}
+```
+
+### API Response Format
+
+```typescript
+interface ApiResponse<T> {
+  success: boolean;
+  data?: T;
+  error?: ErrorResponse;
+}
+```
+
+## UI/UX Guidelines
+
+### Layout
+
+- Responsive design for all screens
+- Mobile-first approach
+- Clear navigation hierarchy
+- Consistent spacing and alignment
+
+### Components
+
+- Use Tailwind CSS for styling
+- Implement loading states
+- Show clear error messages
+- Include success confirmations
+
+### Forms
+
+- Client-side validation
+- Clear error indicators
+- Disable submit during processing
+- Show loading states
+
+## Japanese Language Support
+
+### Text Content
+
+- All user-facing text should be in Japanese
+- Use polite form (です/ます調)
+- Consistent terminology throughout
+
+### Date/Time Format
+
+- Use Japanese date format (YYYY 年 MM 月 DD 日)
+- 24-hour time format (HH:mm)
+- Include day of week in Japanese
+
+### Error Messages
+
+- Clear and polite error messages in Japanese
+- Include suggested actions when applicable
+
+## Testing Guidelines
+
+### Unit Tests
+
+- Test all API endpoints
+- Test authentication flows
+- Test attendance calculations
+- Test report management
+
+### Integration Tests
+
+- Test user flows
+- Test attendance workflows
+- Test report submission and viewing
+
+## Security Guidelines
+
+### Authentication
+
+- Secure password hashing
+- JWT token management
+- Session handling
+- CSRF protection
+
+### Data Access
+
+- Role-based access control
+- User data isolation
+- Input validation
+- SQL injection prevention
+
+## Performance Guidelines
+
+### Database
+
+- Efficient queries
+- Proper indexing
+- Connection pooling
+- Query optimization
+
+### API
+
+- Response caching
+- Rate limiting
+- Pagination
+- Request validation
+
+## Example Usage
+
+### Attendance Record
+
+```typescript
+interface AttendanceRecord {
+  id: string;
+  userId: string;
+  clockIn: Date;
+  clockOut: Date | null;
+  duration?: number; // in minutes
+  status: "active" | "completed";
+}
+```
+
+### Daily Report
+
+```typescript
+interface DailyReport {
+  id: string;
+  userId: string;
+  date: Date;
+  content: string;
+  submittedAt: Date;
+  lastModifiedAt: Date;
+}
+```
+
+### User Profile
+
+```typescript
+interface UserProfile {
+  id: string;
+  name: string;
+  email: string;
+  role: "ADMIN" | "USER";
+  createdAt: Date;
+}
+```

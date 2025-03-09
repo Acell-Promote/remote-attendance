@@ -1,0 +1,302 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Daily Report Management Guidelines
+
+## Data Models
+
+### Report Record
+
+```prisma
+model Report {
+  id          String    @id @default(uuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id])
+  date        DateTime  @default(now())
+  content     String    @db.Text
+  status      String    // DRAFT, SUBMITTED, REVIEWED
+  reviewerId  String?
+  reviewer    User?     @relation("ReviewedReports", fields: [reviewerId], references: [id])
+  comments    Comment[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Comment {
+  id        String   @id @default(uuid())
+  reportId  String
+  report    Report   @relation(fields: [reportId], references: [id])
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  content   String
+  createdAt DateTime @default(now())
+}
+```
+
+## API Endpoints
+
+### Create/Update Report
+
+```typescript
+POST /api/reports
+Body {
+  date: string;
+  content: string;
+  status: "DRAFT" | "SUBMITTED";
+}
+Response {
+  success: boolean;
+  data: Report;
+  message: string;
+}
+```
+
+### Get Reports
+
+```typescript
+GET /api/reports
+Query {
+  page?: number;
+  limit?: number;
+  startDate?: string;
+  endDate?: string;
+  status?: string;
+}
+Response {
+  success: boolean;
+  data: {
+    reports: Report[];
+    total: number;
+    currentPage: number;
+    totalPages: number;
+  };
+}
+```
+
+### Get Single Report
+
+```typescript
+GET /api/reports/:id
+Response {
+  success: boolean;
+  data: Report & {
+    comments: Comment[];
+    user: User;
+    reviewer?: User;
+  };
+}
+```
+
+### Add Comment
+
+```typescript
+POST /api/reports/:id/comments
+Body {
+  content: string;
+}
+Response {
+  success: boolean;
+  data: Comment;
+  message: string;
+}
+```
+
+## Component Structure
+
+### ReportEditor
+
+```typescript
+interface ReportEditorProps {
+  initialData?: Report;
+  onSubmit: (data: ReportFormData) => Promise<void>;
+  onSaveDraft: (data: ReportFormData) => Promise<void>;
+}
+
+interface ReportFormData {
+  date: Date;
+  content: string;
+  status: "DRAFT" | "SUBMITTED";
+}
+```
+
+### ReportList
+
+```typescript
+interface ReportListProps {
+  reports: Report[];
+  total: number;
+  currentPage: number;
+  onPageChange: (page: number) => void;
+  onReportClick: (report: Report) => void;
+}
+```
+
+### ReportViewer
+
+```typescript
+interface ReportViewerProps {
+  report: Report & {
+    comments: Comment[];
+    user: User;
+    reviewer?: User;
+  };
+  onAddComment: (content: string) => Promise<void>;
+  onStatusChange: (status: string) => Promise<void>;
+}
+```
+
+## UI Components
+
+### Editor Features
+
+- Rich text editor
+- Auto-save functionality
+- Draft/Submit buttons
+- Date selection
+- Character count
+
+### Report List
+
+- Date filtering
+- Status filtering
+- Pagination
+- Sort by date/status
+- Search functionality
+
+### Report Viewer
+
+- Comment section
+- Review status
+- Edit history (future)
+- Print view
+
+## Business Rules
+
+### Report Status
+
+```typescript
+enum ReportStatus {
+  DRAFT = "DRAFT",
+  SUBMITTED = "SUBMITTED",
+  REVIEWED = "REVIEWED",
+}
+
+interface StatusTransition {
+  from: ReportStatus;
+  to: ReportStatus;
+  allowedRoles: UserRole[];
+}
+```
+
+### Validation Rules
+
+- Required content length
+- One report per day
+- Status transition rules
+- Comment permissions
+
+### Auto-save Rules
+
+```typescript
+interface AutoSaveConfig {
+  interval: number; // milliseconds
+  minChanges: number;
+  debounceTime: number;
+}
+```
+
+## Error Handling
+
+### Error Messages
+
+```typescript
+const reportErrors = {
+  saveFailed: "レポートの保存に失敗しました",
+  submitFailed: "レポートの提出に失敗しました",
+  invalidDate: "無効な日付です",
+  duplicateReport: "この日付のレポートは既に存在します",
+  contentRequired: "レポート内容は必須です",
+  commentFailed: "コメントの投稿に失敗しました",
+  unauthorized: "この操作を実行する権限がありません",
+};
+```
+
+### Recovery Strategies
+
+- Local storage backup
+- Conflict resolution
+- Version control
+- Error retry logic
+
+## Performance Guidelines
+
+### Data Management
+
+- Optimistic updates
+- Pagination strategy
+- Cache invalidation
+- Real-time updates
+
+### Editor Performance
+
+- Debounced saves
+- Lazy loading
+- Content chunking
+- Memory management
+
+## Testing Guidelines
+
+### Unit Tests
+
+- Form validation
+- Status transitions
+- Auto-save logic
+- Permission checks
+
+### Integration Tests
+
+- API interactions
+- Database operations
+- Comment system
+- Status workflow
+
+### E2E Tests
+
+- Report creation
+- Submission flow
+- Review process
+- Comment thread
+
+## Accessibility Guidelines
+
+### Editor Accessibility
+
+- Keyboard navigation
+- Screen reader support
+- ARIA labels
+- Focus management
+
+### Form Controls
+
+- Clear labels
+- Error messages
+- Required fields
+- Input validation
+
+## Internationalization
+
+### Date Formats
+
+- Japanese calendar
+- Time zone handling
+- Format localization
+- Date validation
+
+### Content Guidelines
+
+- Japanese input
+- Character limits
+- Text direction
+- Font support
