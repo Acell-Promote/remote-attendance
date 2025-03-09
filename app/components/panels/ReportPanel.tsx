@@ -48,15 +48,21 @@ export default function ReportPanel() {
     setError("");
 
     try {
-      const data = await apiRequest<PaginatedResponse<ReportWithRelations>>(
-        "/api/reports",
-        {
-          params: { page, limit: REPORTS_PER_PAGE },
-        }
-      );
-      setReports(data.reports || []);
-      setTotal(data.total || 0);
+      console.log("Fetching reports...");
+      const response = await apiRequest<
+        ApiResponse<PaginatedResponse<ReportWithRelations>>
+      >("/api/reports", {
+        params: { page, limit: REPORTS_PER_PAGE },
+      });
+      console.log("Reports received:", response);
+      if (response.data) {
+        setReports(response.data.reports || []);
+        setTotal(response.data.total || 0);
+      } else {
+        console.error("No data in response:", response);
+      }
     } catch (error) {
+      console.error("Error fetching reports:", error);
       setError(error instanceof Error ? error.message : "エラーが発生しました");
     } finally {
       setLoading(false);
