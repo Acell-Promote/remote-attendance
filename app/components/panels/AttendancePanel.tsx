@@ -127,7 +127,7 @@ export default function AttendancePanel() {
   const totalPages = Math.ceil(
     (attendanceRecords?.length || 0) / RECORDS_PER_PAGE
   );
-  const currentRecords = attendanceRecords.slice(
+  const currentRecords = (attendanceRecords || []).slice(
     (currentPage - 1) * RECORDS_PER_PAGE,
     currentPage * RECORDS_PER_PAGE
   );
