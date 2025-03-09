@@ -1,12 +1,20 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "./auth";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
-export type ApiResponse<T = any> = {
+export type ApiResponse<T> = {
   success: boolean;
   data?: T;
   message?: string;
+  error?: string;
 };
+
+export class ApiError extends Error {
+  constructor(message: string, public status: number = 400) {
+    super(message);
+    this.name = "ApiError";
+  }
+}
 
 export async function checkAuth() {
   const session = await getServerSession(authOptions);
@@ -16,39 +24,52 @@ export async function checkAuth() {
   return session;
 }
 
-export class ApiError extends Error {
-  constructor(message: string, public statusCode: number = 500) {
-    super(message);
-    this.name = "ApiError";
-  }
+export function createApiResponse<T>(
+  data?: T,
+  message?: string,
+  status: number = 200
+): NextResponse<ApiResponse<T>> {
+  const success = status >= 200 && status < 300;
+
+  return NextResponse.json(
+    {
+      success,
+      ...(data && { data }),
+      ...(message && { message }),
+    },
+    { status }
+  );
 }
 
-export function createSuccessResponse<T>(data?: T, message?: string) {
-  return NextResponse.json({
-    success: true,
-    data,
-    message,
-  });
-}
-
-export function createErrorResponse(error: unknown) {
-  console.error("API Error:", error);
-
+export function createErrorResponse(
+  error: unknown
+): NextResponse<ApiResponse<never>> {
   if (error instanceof ApiError) {
     return NextResponse.json(
       {
         success: false,
-        message: error.message,
+        error: error.message,
       },
-      { status: error.statusCode }
+      { status: error.status }
     );
   }
 
+  console.error("Unexpected error:", error);
   return NextResponse.json(
     {
       success: false,
-      message: "サーバーエラーが発生しました",
+      error: "予期せぬエラーが発生しました",
     },
     { status: 500 }
   );
 }
+
+// Common error responses
+export const unauthorizedResponse = () =>
+  createErrorResponse(new ApiError("認証が必要です", 401));
+
+export const forbiddenResponse = () =>
+  createErrorResponse(new ApiError("権限がありません", 403));
+
+export const notFoundResponse = () =>
+  createErrorResponse(new ApiError("リソースが見つかりません", 404));
