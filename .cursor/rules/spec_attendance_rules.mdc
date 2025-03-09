@@ -1,0 +1,240 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Attendance Management Guidelines
+
+## Data Models
+
+### Attendance Record
+
+```prisma
+model Attendance {
+  id          String    @id @default(uuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id])
+  clockIn     DateTime
+  clockOut    DateTime?
+  date        DateTime  @default(now())
+  status      String    // WORKING, BREAK, DONE
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+```
+
+## API Endpoints
+
+### Clock In
+
+```typescript
+POST /api/attendance/clock-in
+Response {
+  success: boolean;
+  data: {
+    id: string;
+    clockIn: Date;
+    status: "WORKING";
+  };
+  message: string;
+}
+```
+
+### Clock Out
+
+```typescript
+POST /api/attendance/clock-out
+Response {
+  success: boolean;
+  data: {
+    id: string;
+    clockOut: Date;
+    status: "DONE";
+  };
+  message: string;
+}
+```
+
+### Get Attendance History
+
+```typescript
+GET /api/attendance/history
+Query {
+  page?: number;
+  limit?: number;
+  startDate?: string;
+  endDate?: string;
+}
+Response {
+  success: boolean;
+  data: {
+    records: AttendanceRecord[];
+    total: number;
+    currentPage: number;
+    totalPages: number;
+  };
+}
+```
+
+### Get Current Status
+
+```typescript
+GET /api/attendance/status
+Response {
+  success: boolean;
+  data: {
+    isWorking: boolean;
+    currentRecord?: AttendanceRecord;
+  };
+}
+```
+
+## Component Structure
+
+### AttendancePanel
+
+```typescript
+interface AttendancePanelProps {
+  user: User;
+}
+
+interface AttendanceState {
+  isWorking: boolean;
+  currentRecord: AttendanceRecord | null;
+  history: {
+    records: AttendanceRecord[];
+    total: number;
+    currentPage: number;
+  };
+  loading: boolean;
+  error: string | null;
+}
+```
+
+### AttendanceHistory
+
+```typescript
+interface AttendanceHistoryProps {
+  records: AttendanceRecord[];
+  total: number;
+  currentPage: number;
+  onPageChange: (page: number) => void;
+}
+```
+
+## UI Components
+
+### Status Display
+
+- Current status (勤務中、休憩中、退勤済み)
+- Clock in/out times
+- Duration calculation
+- Status indicators (色付きアイコン)
+
+### Action Buttons
+
+- Clock In button (出勤)
+- Clock Out button (退勤)
+- Break buttons (future)
+
+### History Table
+
+- Date and time formatting
+- Pagination controls
+- Sorting options
+- Status indicators
+
+## Business Rules
+
+### Time Calculations
+
+```typescript
+interface TimeCalculation {
+  calculateDuration: (clockIn: Date, clockOut?: Date) => string;
+  formatTime: (date: Date) => string;
+  isWorkingHours: (time: Date) => boolean;
+}
+```
+
+### Validation Rules
+
+- No duplicate clock-ins per day
+- Clock-out must follow clock-in
+- Working hours validation
+- Break time rules (future)
+
+### Status Management
+
+```typescript
+enum AttendanceStatus {
+  WORKING = "WORKING",
+  BREAK = "BREAK",
+  DONE = "DONE",
+}
+
+interface StatusTransition {
+  from: AttendanceStatus;
+  to: AttendanceStatus;
+  allowed: boolean;
+}
+```
+
+## Error Handling
+
+### Error Messages
+
+```typescript
+const attendanceErrors = {
+  alreadyClockedIn: "既に出勤済みです",
+  notClockedIn: "まだ出勤していません",
+  invalidClockOut: "出勤時刻より前の退勤時刻は設定できません",
+  serverError: "サーバーエラーが発生しました",
+  fetchError: "データの取得に失敗しました",
+};
+```
+
+### Error Recovery
+
+- Retry mechanisms
+- Fallback states
+- User notifications
+- Data persistence
+
+## Performance Guidelines
+
+### Data Loading
+
+- Pagination implementation
+- Lazy loading
+- Caching strategies
+- Optimistic updates
+
+### State Management
+
+- Local state vs Server state
+- Real-time updates
+- Data synchronization
+- Error boundaries
+
+## Testing Guidelines
+
+### Unit Tests
+
+- Component rendering
+- Business logic
+- Time calculations
+- Status transitions
+
+### Integration Tests
+
+- API endpoints
+- Database operations
+- State management
+- Error handling
+
+### E2E Tests
+
+- User workflows
+- Clock in/out process
+- History viewing
+- Error scenarios

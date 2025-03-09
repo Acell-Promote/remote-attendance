@@ -1,0 +1,203 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Authentication and User Management Guidelines
+
+## Authentication Implementation
+
+### NextAuth.js Configuration
+
+```typescript
+// Configuration structure for NextAuth
+interface AuthConfig {
+  providers: [
+    CredentialsProvider({
+      name: "Credentials",
+      credentials: {
+        email: { label: "メールアドレス", type: "email" },
+        password: { label: "パスワード", type: "password" }
+      }
+    })
+  ],
+  session: {
+    strategy: "jwt",
+    maxAge: 30 * 24 * 60 * 60 // 30 days
+  },
+  pages: {
+    signIn: "/login",
+    error: "/auth/error"
+  }
+}
+```
+
+### User Registration
+
+- Required fields:
+  - メールアドレス (email)
+  - パスワード (password)
+  - 名前 (name, optional)
+- Password requirements:
+  - Minimum 8 characters
+  - At least one number
+  - At least one special character
+- Email validation:
+  - Valid email format
+  - Unique in database
+
+### Login Process
+
+- Email/password authentication
+- JWT token generation
+- Session management
+- Redirect to dashboard on success
+
+### Error Messages
+
+```typescript
+const authErrors = {
+  invalidCredentials: "メールアドレスまたはパスワードが無効です",
+  emailRequired: "メールアドレスは必須です",
+  passwordRequired: "パスワードは必須です",
+  emailExists: "このメールアドレスは既に登録されています",
+  weakPassword: "パスワードは8文字以上で、数字と記号を含める必要があります",
+  serverError: "エラーが発生しました。もう一度お試しください。",
+};
+```
+
+## User Management
+
+### User Roles
+
+```typescript
+enum UserRole {
+  ADMIN = "ADMIN",
+  USER = "USER",
+}
+
+interface UserPermissions {
+  canViewAllAttendance: boolean;
+  canViewAllReports: boolean;
+  canManageUsers: boolean;
+}
+```
+
+### Database Schema
+
+```prisma
+model User {
+  id            String       @id @default(uuid())
+  name          String?
+  email         String      @unique
+  password      String
+  role          Role        @default(USER)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  attendances   Attendance[]
+  reports       Report[]
+}
+```
+
+### API Endpoints
+
+#### Registration
+
+```typescript
+POST /api/auth/register
+{
+  name?: string;
+  email: string;
+  password: string;
+}
+```
+
+#### Login
+
+```typescript
+POST / api / auth / login;
+{
+  email: string;
+  password: string;
+}
+```
+
+### Component Structure
+
+#### Registration Form
+
+```typescript
+interface RegistrationFormProps {
+  onSuccess?: () => void;
+  onError?: (error: string) => void;
+}
+
+// Required form fields
+interface RegistrationFormData {
+  name?: string;
+  email: string;
+  password: string;
+  confirmPassword: string;
+}
+```
+
+#### Login Form
+
+```typescript
+interface LoginFormProps {
+  onSuccess?: () => void;
+  onError?: (error: string) => void;
+}
+
+// Required form fields
+interface LoginFormData {
+  email: string;
+  password: string;
+}
+```
+
+## Security Guidelines
+
+### Password Handling
+
+- Hash passwords using bcrypt
+- Salt rounds: 10
+- Never store plain text passwords
+- Never log password data
+
+### Session Management
+
+- Use HTTP-only cookies
+- Implement CSRF protection
+- Set appropriate security headers
+- Implement rate limiting
+
+### Input Validation
+
+- Sanitize all user inputs
+- Validate email format
+- Validate password strength
+- Prevent SQL injection
+
+## UI/UX Guidelines
+
+### Form Layout
+
+- Clear field labels in Japanese
+- Visible validation feedback
+- Password strength indicator
+- Loading states during submission
+
+### Error Handling
+
+- Clear error messages in Japanese
+- Specific validation feedback
+- User-friendly error recovery
+- Maintain form data on error
+
+### Success Feedback
+
+- Clear success messages
+- Automatic redirection
+- Progress indicators
+- Confirmation emails (future)
