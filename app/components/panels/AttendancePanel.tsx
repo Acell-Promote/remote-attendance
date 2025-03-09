@@ -78,11 +78,15 @@ export default function AttendancePanel() {
     setHistoryError("");
 
     try {
-      const data = await apiRequest<{ records: AttendanceRecord[] }>(
-        "/api/attendance/history"
-      );
-      setAttendanceRecords(data.records);
+      console.log("Fetching attendance history...");
+      const response = await apiRequest<{
+        success: boolean;
+        data: { records: AttendanceRecord[] };
+      }>("/api/attendance/history");
+      console.log("Attendance records received:", response);
+      setAttendanceRecords(response.data.records);
     } catch (error) {
+      console.error("Error fetching attendance history:", error);
       setHistoryError(
         error instanceof Error ? error.message : "エラーが発生しました"
       );
