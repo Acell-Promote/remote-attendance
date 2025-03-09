@@ -7,6 +7,7 @@ import {
   createErrorResponse,
 } from "@/lib/api-utils";
 import { createCommentSchema } from "@/lib/validations";
+import { checkReportAccess } from "@/lib/report-utils";
 
 export async function POST(
   request: NextRequest,
@@ -14,24 +15,14 @@ export async function POST(
 ) {
   try {
     const session = await checkAuth();
-    const body = await request.json();
+    await checkReportAccess(params.id, session);
 
-    // Validate comment data
+    const body = await request.json();
     const validatedData = createCommentSchema.parse({
       ...body,
       reportId: params.id,
     });
 
-    // Check if report exists
-    const report = await prisma.report.findUnique({
-      where: { id: params.id },
-    });
-
-    if (!report) {
-      throw new ApiError("レポートが見つかりません", 404);
-    }
-
-    // Create comment
     const comment = await prisma.comment.create({
       data: {
         content: validatedData.content,
@@ -61,19 +52,7 @@ export async function GET(
 ) {
   try {
     const session = await checkAuth();
-
-    // Check if report exists and user has access
-    const report = await prisma.report.findUnique({
-      where: { id: params.id },
-    });
-
-    if (!report) {
-      throw new ApiError("レポートが見つかりません", 404);
-    }
-
-    if (report.userId !== session.user.id) {
-      throw new ApiError("このレポートにアクセスする権限がありません", 403);
-    }
+    await checkReportAccess(params.id, session);
 
     const comments = await prisma.comment.findMany({
       where: { reportId: params.id },
