@@ -9,18 +9,21 @@ import {
 import { createCommentSchema } from "@/lib/validations";
 import { checkReportAccess } from "@/lib/report-utils";
 
-export async function POST(
-  request: NextRequest,
-  context: { params: { id: string } }
-) {
+interface RouteParams {
+  params: {
+    id: string;
+  };
+}
+
+export async function POST(request: NextRequest, { params }: RouteParams) {
   try {
     const session = await checkAuth();
-    await checkReportAccess(context.params.id, session);
+    await checkReportAccess(params.id, session);
 
     const body = await request.json();
     const validatedData = createCommentSchema.parse({
       ...body,
-      reportId: context.params.id,
+      reportId: params.id,
     });
 
     const comment = await prisma.comment.create({
@@ -46,16 +49,13 @@ export async function POST(
 }
 
 // Get comments for a report
-export async function GET(
-  request: NextRequest,
-  context: { params: { id: string } }
-) {
+export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
     const session = await checkAuth();
-    await checkReportAccess(context.params.id, session);
+    await checkReportAccess(params.id, session);
 
     const comments = await prisma.comment.findMany({
-      where: { reportId: context.params.id },
+      where: { reportId: params.id },
       include: {
         user: {
           select: {
