@@ -1,18 +1,17 @@
 import { NextRequest } from "next/server";
-import { getServerSession } from "next-auth";
 import prisma from "@/lib/prisma";
-import { authOptions } from "@/lib/auth";
-import { createApiResponse, unauthorizedResponse } from "@/lib/api-utils";
+import {
+  checkAuth,
+  createApiResponse,
+  createErrorResponse,
+} from "@/lib/api-utils";
 import { dateRangeSchema } from "@/lib/validations";
+import { SessionWithId } from "@/app/types/auth";
 
 export async function GET(request: NextRequest) {
-  const session = await getServerSession(authOptions);
-
-  if (!session) {
-    return unauthorizedResponse();
-  }
-
   try {
+    const session = (await checkAuth()) as unknown as SessionWithId;
+
     const { searchParams } = new URL(request.url);
     const startDate = searchParams.get("startDate");
     const endDate = searchParams.get("endDate");
@@ -58,6 +57,6 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error("Error fetching attendance records:", error);
-    return createApiResponse(null, "勤怠記録の取得に失敗しました", 500);
+    return createErrorResponse(error);
   }
 }

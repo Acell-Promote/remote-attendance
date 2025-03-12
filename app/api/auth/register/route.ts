@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { hash } from "bcryptjs";
-import prisma from "lib/prisma";
+import prisma from "@/lib/prisma";
+import { createApiResponse, createErrorResponse } from "@/lib/api-utils";
 
 export async function POST(req: Request) {
   try {
@@ -8,9 +9,10 @@ export async function POST(req: Request) {
 
     // Validate input
     if (!email || !password) {
-      return NextResponse.json(
-        { message: "メールアドレスとパスワードは必須です" },
-        { status: 400 }
+      return createApiResponse(
+        null,
+        "メールアドレスとパスワードは必須です",
+        400
       );
     }
 
@@ -20,9 +22,10 @@ export async function POST(req: Request) {
     });
 
     if (existingUser) {
-      return NextResponse.json(
-        { message: "このメールアドレスは既に登録されています" },
-        { status: 400 }
+      return createApiResponse(
+        null,
+        "このメールアドレスは既に登録されています",
+        400
       );
     }
 
@@ -39,20 +42,15 @@ export async function POST(req: Request) {
     });
 
     // Remove password from response
-    const { password: _, ...userWithoutPassword } = user;
+    const { password: _password, ...userWithoutPassword } = user;
 
-    return NextResponse.json(
-      {
-        message: "ユーザー登録が完了しました",
-        user: userWithoutPassword,
-      },
-      { status: 201 }
+    return createApiResponse(
+      { user: userWithoutPassword },
+      "ユーザー登録が完了しました",
+      201
     );
   } catch (error) {
     console.error("Registration error:", error);
-    return NextResponse.json(
-      { message: "ユーザー登録中にエラーが発生しました" },
-      { status: 500 }
-    );
+    return createErrorResponse(error);
   }
 }

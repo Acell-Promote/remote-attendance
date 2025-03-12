@@ -4,27 +4,38 @@ import {
   checkAuth,
   createApiResponse,
   createErrorResponse,
-  unauthorizedResponse,
 } from "@/lib/api-utils";
+import { SessionWithId } from "@/app/types/auth";
 
-export async function GET(request: NextRequest) {
+interface AttendanceStatus {
+  isActive: boolean;
+  lastClockIn: Date | null;
+}
+
+/**
+ * Get the current attendance status for the authenticated user
+ * Returns whether they are clocked in and their last clock-in time
+ */
+export async function GET(_request: NextRequest) {
   try {
-    const session = await checkAuth();
+    const session = (await checkAuth()) as unknown as SessionWithId;
 
-    // Find the most recent attendance record for the user
-    const lastRecord = await prisma.attendance.findFirst({
-      where: { userId: session.user.id },
+    const activeAttendance = await prisma.attendance.findFirst({
+      where: {
+        userId: session.user.id,
+        clockOut: null,
+      },
       orderBy: { createdAt: "desc" },
     });
 
-    // Check if the user is currently clocked in (has a record with no clock out)
-    const isActive = lastRecord && lastRecord.clockOut === null;
+    const status: AttendanceStatus = {
+      isActive: !!activeAttendance,
+      lastClockIn: activeAttendance?.clockIn ?? null,
+    };
 
-    return createApiResponse({
-      isActive,
-      lastClockIn: isActive ? lastRecord.clockIn : null,
-    });
+    return createApiResponse(status);
   } catch (error) {
+    console.error("Failed to fetch attendance status:", error);
     return createErrorResponse(error);
   }
 }
