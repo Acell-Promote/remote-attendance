@@ -7,6 +7,9 @@
       "esnext.asynciterable",
       "dom"
     ],
+    "types": [
+      "node"
+    ],
     "skipLibCheck": true,
     "sourceMap": true,
     "outDir": "./dist",
