@@ -3,14 +3,16 @@
   "version": "0.1.0",
   "private": true,
   "engines": {
-    "node": "23.x"
+    "node": "23.x",
+    "pnpm": "10.x"
   },
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "next build",
+    "build": "prisma generate && next build",
     "start": "next start",
     "lint": "next lint",
-    "seed": "ts-node --compiler-options '{\"module\":\"CommonJS\"}' scripts/seed.ts"
+    "seed": "ts-node --compiler-options '{\"module\":\"CommonJS\"}' scripts/seed.ts",
+    "heroku-postbuild": "pnpm prisma generate && pnpm build"
   },
   "dependencies": {
     "@prisma/client": "^6.4.1",
@@ -22,7 +24,8 @@
     "postcss": "^8.5.3",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "zod": "^3.24.2"
+    "zod": "^3.24.2",
+    "prisma": "^6.4.1"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
@@ -33,7 +36,6 @@
     "autoprefixer": "^10.4.20",
     "eslint": "^9",
     "eslint-config-next": "15.2.1",
-    "prisma": "^6.4.1",
     "tailwindcss": "^3.4.1",
     "ts-node": "^10.9.2",
     "typescript": "^5"
