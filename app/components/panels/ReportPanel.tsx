@@ -71,7 +71,7 @@ export default function ReportPanel() {
 
   useEffect(() => {
     fetchReports();
-  }, [page]);
+  }, [page, fetchReports]);
 
   const handleCreateReport = async (data: ReportFormData) => {
     try {

@@ -5,30 +5,6 @@ import { ReportStatus, type ReportWithRelations } from "@/app/types/report";
 import { formatReportDate } from "@/lib/report-display-utils";
 import StatusBadge from "../common/StatusBadge";
 
-interface User {
-  name: string | null;
-  email: string;
-}
-
-interface Comment {
-  id: string;
-  content: string;
-  createdAt: string;
-  user: User;
-}
-
-interface Report {
-  id: string;
-  date: string;
-  content: string;
-  status: string;
-  createdAt: string;
-  updatedAt: string;
-  user: User;
-  reviewer?: User;
-  comments: Comment[];
-}
-
 interface ReportViewerProps {
   report: ReportWithRelations;
   onAddComment: (content: string) => Promise<void>;

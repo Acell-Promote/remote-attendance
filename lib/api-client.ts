@@ -1,5 +1,3 @@
-import { ApiResponse } from "@/app/types/api";
-
 interface RequestOptions extends RequestInit {
   params?: Record<string, string | number>;
 }
