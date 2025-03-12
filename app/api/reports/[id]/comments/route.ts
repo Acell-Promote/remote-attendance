@@ -9,21 +9,15 @@ import {
 import { createCommentSchema } from "@/lib/validations";
 import { checkReportAccess } from "@/lib/report-utils";
 
-type Context = {
-  params: {
-    id: string;
-  };
-};
-
 export async function POST(
-  req: NextRequest,
-  { params }: Context
+  request: NextRequest,
+  { params }: { params: Record<string, string> }
 ): Promise<NextResponse> {
   try {
     const session = await checkAuth();
     await checkReportAccess(params.id, session);
 
-    const body = await req.json();
+    const body = await request.json();
     const validatedData = createCommentSchema.parse({
       ...body,
       reportId: params.id,
@@ -53,8 +47,8 @@ export async function POST(
 
 // Get comments for a report
 export async function GET(
-  req: NextRequest,
-  { params }: Context
+  request: NextRequest,
+  { params }: { params: Record<string, string> }
 ): Promise<NextResponse> {
   try {
     const session = await checkAuth();
