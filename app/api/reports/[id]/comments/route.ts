@@ -11,16 +11,16 @@ import { checkReportAccess } from "@/lib/report-utils";
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: { id: string } }
 ) {
   try {
     const session = await checkAuth();
-    await checkReportAccess(params.id, session);
+    await checkReportAccess(context.params.id, session);
 
     const body = await request.json();
     const validatedData = createCommentSchema.parse({
       ...body,
-      reportId: params.id,
+      reportId: context.params.id,
     });
 
     const comment = await prisma.comment.create({
@@ -48,14 +48,14 @@ export async function POST(
 // Get comments for a report
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: { id: string } }
 ) {
   try {
     const session = await checkAuth();
-    await checkReportAccess(params.id, session);
+    await checkReportAccess(context.params.id, session);
 
     const comments = await prisma.comment.findMany({
-      where: { reportId: params.id },
+      where: { reportId: context.params.id },
       include: {
         user: {
           select: {

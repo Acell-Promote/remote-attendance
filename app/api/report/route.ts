@@ -1,11 +1,8 @@
 import { NextRequest } from "next/server";
 import { getServerSession } from "next-auth";
 import prisma from "@/lib/prisma";
-import { authOptions } from "../auth/[...nextauth]/route";
-import {
-  createApiResponse,
-  unauthorizedResponse,
-} from "@/lib/api-utils";
+import { authOptions } from "@/lib/auth";
+import { createApiResponse, unauthorizedResponse } from "@/lib/api-utils";
 import { dateRangeSchema } from "@/lib/validations";
 
 export async function GET(request: NextRequest) {
