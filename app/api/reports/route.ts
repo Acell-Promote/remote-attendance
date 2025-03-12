@@ -1,20 +1,18 @@
 import { NextRequest } from "next/server";
 import prisma from "@/lib/prisma";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import {
   createApiResponse,
-  unauthorizedResponse,
   checkAuth,
   ApiError,
   createErrorResponse,
 } from "@/lib/api-utils";
 import { createReportSchema, updateReportSchema } from "@/lib/validations";
-import { z } from "zod";
+import { SessionWithId } from "@/app/types/auth";
 
 // Get reports with pagination and filtering
 export async function GET(request: NextRequest) {
   try {
-    const session = await checkAuth();
+    const session = (await checkAuth()) as unknown as SessionWithId;
     console.log("Session in reports endpoint:", session);
 
     const searchParams = request.nextUrl.searchParams;
@@ -56,7 +54,7 @@ export async function GET(request: NextRequest) {
 // Create a new report
 export async function POST(request: NextRequest) {
   try {
-    const session = await checkAuth();
+    const session = (await checkAuth()) as unknown as SessionWithId;
     const body = await request.json();
     const validatedData = createReportSchema.parse(body);
 
@@ -80,7 +78,7 @@ export async function POST(request: NextRequest) {
 // Update a report
 export async function PUT(request: NextRequest) {
   try {
-    const session = await checkAuth();
+    const session = (await checkAuth()) as unknown as SessionWithId;
     const body = await request.json();
     const validatedData = updateReportSchema.parse(body);
 

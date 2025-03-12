@@ -6,30 +6,6 @@ import { formatSimpleDate } from "@/lib/report-display-utils";
 import StatusBadge from "../common/StatusBadge";
 import Pagination from "../common/Pagination";
 
-interface User {
-  name: string | null;
-  email: string;
-}
-
-interface Comment {
-  id: string;
-  content: string;
-  createdAt: string;
-  user: User;
-}
-
-interface Report {
-  id: string;
-  date: string;
-  content: string;
-  status: string;
-  createdAt: string;
-  updatedAt: string;
-  user: User;
-  reviewer?: User;
-  comments: Comment[];
-}
-
 interface ReportListProps {
   reports: ReportWithRelations[];
   total: number;

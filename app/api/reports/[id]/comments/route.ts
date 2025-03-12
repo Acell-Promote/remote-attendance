@@ -1,26 +1,27 @@
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import {
-  ApiError,
   checkAuth,
   createApiResponse,
   createErrorResponse,
 } from "@/lib/api-utils";
 import { createCommentSchema } from "@/lib/validations";
 import { checkReportAccess } from "@/lib/report-utils";
+import { SessionWithId } from "@/app/types/auth";
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+  { params }: { params: Promise<{ id: string }> }
+): Promise<NextResponse> {
   try {
-    const session = await checkAuth();
-    await checkReportAccess(params.id, session);
+    const session = (await checkAuth()) as unknown as SessionWithId;
+    const { id } = await params;
+    await checkReportAccess(id, session);
 
     const body = await request.json();
     const validatedData = createCommentSchema.parse({
       ...body,
-      reportId: params.id,
+      reportId: id,
     });
 
     const comment = await prisma.comment.create({
@@ -48,14 +49,15 @@ export async function POST(
 // Get comments for a report
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+  { params }: { params: Promise<{ id: string }> }
+): Promise<NextResponse> {
   try {
-    const session = await checkAuth();
-    await checkReportAccess(params.id, session);
+    const session = (await checkAuth()) as unknown as SessionWithId;
+    const { id } = await params;
+    await checkReportAccess(id, session);
 
     const comments = await prisma.comment.findMany({
-      where: { reportId: params.id },
+      where: { reportId: id },
       include: {
         user: {
           select: {

@@ -6,6 +6,9 @@ import { useRouter } from "next/navigation";
 import AttendancePanel from "@/app/components/panels/AttendancePanel";
 import ReportPanel from "@/app/components/panels/ReportPanel";
 
+// Force dynamic rendering
+export const dynamic = "force-dynamic";
+
 export default function DashboardPage() {
   const { data: session, status } = useSession();
   const router = useRouter();

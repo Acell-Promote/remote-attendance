@@ -1,41 +1,45 @@
-import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
+import { NextRequest } from "next/server";
 import { PrismaClient } from "@prisma/client";
-import { authOptions } from "../auth/[...nextauth]/route";
+import {
+  checkAuth,
+  createApiResponse,
+  createErrorResponse,
+} from "@/lib/api-utils";
+import { SessionWithId } from "@/app/types/auth";
 
 const prisma = new PrismaClient();
 
 export async function POST(request: NextRequest) {
-  const session = await getServerSession(authOptions);
+  try {
+    const session = (await checkAuth()) as unknown as SessionWithId;
 
-  if (!session) {
-    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
-  }
+    const data = await request.json();
+    const { action } = data;
 
-  const data = await request.json();
-  const { action } = data;
+    if (action === "clock-in") {
+      const record = await prisma.attendance.create({
+        data: { userId: session.user.id, clockIn: new Date() },
+      });
+      return createApiResponse(record, "打刻しました", 201);
+    } else if (action === "clock-out") {
+      const lastRecord = await prisma.attendance.findFirst({
+        where: { userId: session.user.id, clockOut: null },
+        orderBy: { createdAt: "desc" },
+      });
 
-  if (action === "clock-in") {
-    const record = await prisma.attendance.create({
-      data: { userId: session.user.id, clockIn: new Date() },
-    });
-    return NextResponse.json(record, { status: 201 });
-  } else if (action === "clock-out") {
-    const lastRecord = await prisma.attendance.findFirst({
-      where: { userId: session.user.id, clockOut: null },
-      orderBy: { createdAt: "desc" },
-    });
+      if (!lastRecord) {
+        return createApiResponse(null, "アクティブな勤務がありません", 400);
+      }
 
-    if (!lastRecord) {
-      return NextResponse.json({ message: "No active shift" }, { status: 400 });
+      const updatedRecord = await prisma.attendance.update({
+        where: { id: lastRecord.id },
+        data: { clockOut: new Date() },
+      });
+      return createApiResponse(updatedRecord, "退勤しました");
     }
 
-    const updatedRecord = await prisma.attendance.update({
-      where: { id: lastRecord.id },
-      data: { clockOut: new Date() },
-    });
-    return NextResponse.json(updatedRecord, { status: 200 });
+    return createApiResponse(null, "無効なアクション", 400);
+  } catch (error) {
+    return createErrorResponse(error);
   }
-
-  return NextResponse.json({ message: "Invalid action" }, { status: 400 });
 }
