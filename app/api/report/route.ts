@@ -40,16 +40,19 @@ export async function GET(request: NextRequest) {
     });
 
     // Calculate total hours worked
-    const totalHours = attendanceRecords.reduce((total, record) => {
-      if (!record.clockOut) return total;
+    const totalHours = attendanceRecords.reduce(
+      (total: number, record: { clockIn: Date; clockOut: Date | null }) => {
+        if (!record.clockOut) return total;
 
-      const clockIn = new Date(record.clockIn);
-      const clockOut = new Date(record.clockOut);
-      const hoursWorked =
-        (clockOut.getTime() - clockIn.getTime()) / (1000 * 60 * 60);
+        const clockIn = new Date(record.clockIn);
+        const clockOut = new Date(record.clockOut);
+        const hoursWorked =
+          (clockOut.getTime() - clockIn.getTime()) / (1000 * 60 * 60);
 
-      return total + hoursWorked;
-    }, 0);
+        return total + hoursWorked;
+      },
+      0
+    );
 
     return createApiResponse({
       records: attendanceRecords,
