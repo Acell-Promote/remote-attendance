@@ -1,77 +1,46 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useSession } from "next-auth/react";
+import { useState, useEffect, useCallback } from "react";
 import ReportEditor from "../reports/ReportEditor";
 import ReportList from "../reports/ReportList";
 import ReportViewer from "../reports/ReportViewer";
 import { ApiResponse, PaginatedResponse } from "@/app/types/api";
-import type { ReportWithRelations } from "@/app/types/report";
+import { ReportWithRelations, ReportFormData } from "@/app/types/report";
 import { ReportStatus } from "@/app/types/report";
 import { apiRequest } from "@/lib/api-client";
 
-interface User {
-  name: string | null;
-  email: string;
-}
-
-interface Comment {
-  id: string;
-  content: string;
-  createdAt: string;
-  user: User;
-}
-
-interface ReportFormData {
-  title: string;
-  date: string;
-  content: string;
-  status: ReportStatus;
-}
-
-// Constants
-const REPORTS_PER_PAGE = 10;
-
 export default function ReportPanel() {
-  const { data: session } = useSession();
   const [view, setView] = useState<"list" | "editor" | "viewer">("list");
   const [reports, setReports] = useState<ReportWithRelations[]>([]);
   const [selectedReport, setSelectedReport] =
     useState<ReportWithRelations | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
 
-  const fetchReports = async () => {
+  const fetchReports = useCallback(async () => {
     setLoading(true);
     setError("");
-
     try {
-      console.log("Fetching reports...");
       const response = await apiRequest<
         ApiResponse<PaginatedResponse<ReportWithRelations>>
-      >("/api/reports", {
-        params: { page, limit: REPORTS_PER_PAGE },
-      });
-      console.log("Reports received:", response);
+      >(`/api/reports?page=${page}`);
       if (response.data) {
-        setReports(response.data.reports || []);
-        setTotal(response.data.total || 0);
-      } else {
-        console.error("No data in response:", response);
+        setReports(response.data.reports);
+        setTotal(response.data.total);
       }
     } catch (error) {
-      console.error("Error fetching reports:", error);
-      setError(error instanceof Error ? error.message : "エラーが発生しました");
+      console.error("Failed to fetch reports:", error);
+      setError("レポートの取得に失敗しました");
     } finally {
       setLoading(false);
     }
-  };
+  }, [page]);
 
   useEffect(() => {
     fetchReports();
-  }, [page, fetchReports]);
+  }, [fetchReports]);
 
   const handleCreateReport = async (data: ReportFormData) => {
     try {
