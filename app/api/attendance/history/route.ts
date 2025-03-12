@@ -1,14 +1,16 @@
-import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { getServerSession } from "next-auth/next";
+import type { Session } from "next-auth";
 import {
   checkAuth,
   createApiResponse,
   createErrorResponse,
 } from "@/lib/api-utils";
+import { SessionWithId } from "@/app/types/auth";
 
 export async function GET() {
   try {
-    const session = await checkAuth();
+    const session = (await checkAuth()) as unknown as SessionWithId;
     console.log("Session in history endpoint:", session);
 
     // Get all attendance records for the user, sorted by clockIn date (newest first)

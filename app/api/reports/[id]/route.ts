@@ -1,4 +1,4 @@
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import {
   createApiResponse,
@@ -11,18 +11,20 @@ import {
   validateReportStatus,
   deleteReportWithComments,
 } from "@/lib/report-utils";
+import { SessionWithId } from "@/app/types/auth";
 
 // Get a single report
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+  { params }: { params: Promise<{ id: string }> }
+): Promise<NextResponse> {
   try {
-    const session = await checkAuth();
-    await checkReportAccess(params.id, session);
+    const session = (await checkAuth()) as unknown as SessionWithId;
+    const { id } = await params;
+    await checkReportAccess(id, session);
 
     const report = await prisma.report.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: reportInclude,
     });
 
@@ -35,17 +37,18 @@ export async function GET(
 // Update a report
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+  { params }: { params: Promise<{ id: string }> }
+): Promise<NextResponse> {
   try {
-    const session = await checkAuth();
-    await checkReportAccess(params.id, session);
+    const session = (await checkAuth()) as unknown as SessionWithId;
+    const { id } = await params;
+    await checkReportAccess(id, session);
 
     const { content, status } = await request.json();
     validateReportStatus(status);
 
     const report = await prisma.report.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         content,
         status,
@@ -63,12 +66,13 @@ export async function PUT(
 // Delete a report
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+  { params }: { params: Promise<{ id: string }> }
+): Promise<NextResponse> {
   try {
-    const session = await checkAuth();
-    await checkReportAccess(params.id, session);
-    await deleteReportWithComments(params.id);
+    const session = (await checkAuth()) as unknown as SessionWithId;
+    const { id } = await params;
+    await checkReportAccess(id, session);
+    await deleteReportWithComments(id);
 
     return createApiResponse(null, "レポートを削除しました");
   } catch (error) {
