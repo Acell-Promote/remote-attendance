@@ -1,6 +1,4 @@
 import prisma from "@/lib/prisma";
-import { getServerSession } from "next-auth/next";
-import type { Session } from "next-auth";
 import {
   checkAuth,
   createApiResponse,

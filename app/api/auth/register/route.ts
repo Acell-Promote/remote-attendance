@@ -1,11 +1,11 @@
-import { NextResponse } from "next/server";
-import { hash } from "bcryptjs";
+import { NextRequest } from "next/server";
 import prisma from "@/lib/prisma";
 import { createApiResponse, createErrorResponse } from "@/lib/api-utils";
+import { hash } from "bcryptjs";
 
-export async function POST(req: Request) {
+export async function POST(request: NextRequest) {
   try {
-    const { name, email, password } = await req.json();
+    const { email, password, name } = await request.json();
 
     // Validate input
     if (!email || !password) {
@@ -35,14 +35,15 @@ export async function POST(req: Request) {
     // Create user
     const user = await prisma.user.create({
       data: {
-        name: name || null,
         email,
+        name,
         password: hashedPassword,
       },
     });
 
     // Remove password from response
-    const { password: _password, ...userWithoutPassword } = user;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { password: pwd, ...userWithoutPassword } = user;
 
     return createApiResponse(
       { user: userWithoutPassword },

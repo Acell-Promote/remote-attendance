@@ -1,4 +1,3 @@
-import { NextRequest } from "next/server";
 import prisma from "@/lib/prisma";
 import {
   checkAuth,
@@ -16,7 +15,7 @@ interface AttendanceStatus {
  * Get the current attendance status for the authenticated user
  * Returns whether they are clocked in and their last clock-in time
  */
-export async function GET(_request: NextRequest) {
+export async function GET() {
   try {
     const session = (await checkAuth()) as unknown as SessionWithId;
 

@@ -1,6 +1,6 @@
-import { Session } from "next-auth";
 import prisma from "@/lib/prisma";
 import { ApiError } from "./api-utils";
+import { SessionWithId } from "@/app/types/auth";
 
 // Common report include pattern
 export const reportInclude = {
@@ -32,7 +32,10 @@ export const reportInclude = {
 } as const;
 
 // Check if report exists and user has access
-export async function checkReportAccess(reportId: string, session: Session) {
+export async function checkReportAccess(
+  reportId: string,
+  session: SessionWithId
+) {
   const report = await prisma.report.findUnique({
     where: { id: reportId },
   });
