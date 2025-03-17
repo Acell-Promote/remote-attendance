@@ -34,7 +34,6 @@ export async function GET() {
 
     return createApiResponse(status);
   } catch (error) {
-    console.error("Failed to fetch attendance status:", error);
     return createErrorResponse(error);
   }
 }
