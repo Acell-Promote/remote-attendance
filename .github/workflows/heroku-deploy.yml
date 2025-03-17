@@ -1,0 +1,55 @@
+name: Deploy to Heroku
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    types:
+      - closed
+    branches:
+      - main
+
+jobs:
+  deploy:
+    # Only run if PR is merged or direct push to main
+    if: github.event.pull_request.merged == true || github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js with nvm
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20.11.1"
+          cache: "pnpm"
+
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 10.6.3
+          run_install: false
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Heroku CLI
+        run: |
+          curl https://cli-assets.heroku.com/install.sh | sh
+
+      - name: Deploy to Heroku
+        uses: akhileshns/heroku-deploy@v3.14.15
+        with:
+          heroku_api_key: ${{ secrets.HEROKU_API_KEY }}
+          heroku_app_name: ${{ secrets.HEROKU_APP_NAME }}
+          heroku_email: ${{ secrets.HEROKU_EMAIL }}
+          healthcheck: "https://${{ secrets.HEROKU_APP_NAME }}.herokuapp.com/health"
+          rollbackonhealthcheckfailed: true
+          checkstring: "ok"
+          delay: 30
+          procfile: "web: pnpm start"
+          buildpack: "https://github.com/heroku/heroku-buildpack-nodejs.git"
+        env:
+          HD_NODE_ENV: "production"
+          HD_COREPACK_ENABLE: "true"
