@@ -1,13 +1,25 @@
-export interface ApiResponse<T = unknown> {
-  data?: T;
-  error?: string;
+export interface ApiResponse<T> {
   success: boolean;
+  data?: T;
   message?: string;
+  error?: string;
 }
 
-export interface PaginatedResponse<T = unknown> {
-  reports: T[];
+export interface PaginatedResponse<T> {
   total: number;
-  page: number;
-  totalPages: number;
+  reports: T[];
+}
+
+export interface AttendanceRecord {
+  id: string;
+  userId: string;
+  clockIn: string;
+  clockOut: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AttendanceStatus {
+  isActive: boolean;
+  lastClockIn: string | null;
 }
