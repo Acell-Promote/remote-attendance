@@ -68,6 +68,10 @@ export default function ReportPanel() {
 
   const handleAddComment = async (content: string) => {
     if (!selectedReport) return;
+    console.log("Adding comment to report:", {
+      reportId: selectedReport.id,
+      content,
+    });
 
     try {
       await apiRequest(`/api/reports/${selectedReport.id}/comments`, {
@@ -76,6 +80,7 @@ export default function ReportPanel() {
       });
 
       // Refresh the selected report
+      console.log("Refreshing report after comment:", selectedReport.id);
       const reportData = await apiRequest<ApiResponse<ReportWithRelations>>(
         `/api/reports/${selectedReport.id}`
       );
@@ -83,6 +88,7 @@ export default function ReportPanel() {
         setSelectedReport(reportData.data);
       }
     } catch (error) {
+      console.error("Error adding comment:", error);
       throw error;
     }
   };
