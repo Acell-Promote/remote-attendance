@@ -53,7 +53,7 @@ function CommentForm({ onSubmit, disabled = false }: CommentFormProps) {
         <button
           type="submit"
           disabled={submitting || !content.trim() || disabled}
-          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
+          className="inline-flex items-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50"
         >
           {submitting ? "送信中..." : "コメントを送信"}
         </button>
@@ -71,7 +71,7 @@ function CommentList({
     <div className="space-y-6">
       {comments.map((comment) => (
         <div key={comment.id} className="flex space-x-3">
-          <div className="flex-1 bg-gray-50 rounded-lg px-4 py-3">
+          <div className="flex-1 rounded-lg bg-gray-50 px-4 py-3">
             <div className="text-sm">
               <span className="font-medium text-gray-900">
                 {comment.user.name || comment.user.email}
@@ -120,7 +120,7 @@ export default function ReportViewer({
             <div className="flex justify-end">
               <button
                 onClick={() => onStatusChange(ReportStatus.REVIEWED)}
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                className="inline-flex items-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
               >
                 確認済みにする
               </button>

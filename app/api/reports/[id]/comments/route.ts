@@ -11,7 +11,7 @@ import { ApiError } from "@/lib/api-utils";
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ): Promise<NextResponse> {
   try {
     const session = (await checkAuth()) as unknown as SessionWithId;
@@ -52,7 +52,7 @@ export async function POST(
 // Get comments for a report
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ): Promise<NextResponse> {
   try {
     const session = (await checkAuth()) as unknown as SessionWithId;

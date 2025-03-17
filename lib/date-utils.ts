@@ -30,7 +30,7 @@ export function formatDateTime(dateString: string | Date): string {
 
 export function calculateDuration(
   startDate: Date,
-  endDate: Date = new Date()
+  endDate: Date = new Date(),
 ): string {
   const diffMs = endDate.getTime() - startDate.getTime();
   const diffHrs = Math.floor(diffMs / (1000 * 60 * 60));

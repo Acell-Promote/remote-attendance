@@ -12,7 +12,7 @@ export async function POST(request: NextRequest) {
       return createApiResponse(
         null,
         "メールアドレスとパスワードは必須です",
-        400
+        400,
       );
     }
 
@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
       return createApiResponse(
         null,
         "このメールアドレスは既に登録されています",
-        400
+        400,
       );
     }
 
@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
     return createApiResponse(
       { user: userWithoutPassword },
       "ユーザー登録が完了しました",
-      201
+      201,
     );
   } catch (error) {
     console.error("Registration error:", error);

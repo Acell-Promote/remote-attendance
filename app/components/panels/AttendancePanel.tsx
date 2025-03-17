@@ -81,7 +81,7 @@ export default function AttendancePanel() {
   };
 
   const handleClockAction = async (
-    action: (typeof ATTENDANCE.CLOCK_ACTIONS)[keyof typeof ATTENDANCE.CLOCK_ACTIONS]
+    action: (typeof ATTENDANCE.CLOCK_ACTIONS)[keyof typeof ATTENDANCE.CLOCK_ACTIONS],
   ) => {
     setAttendanceState((prev) => ({ ...prev, status: "loading", error: "" }));
 
@@ -91,7 +91,7 @@ export default function AttendancePanel() {
         {
           method: "POST",
           body: JSON.stringify({ action }),
-        }
+        },
       );
 
       setAttendanceState((prev) => ({
@@ -116,8 +116,8 @@ export default function AttendancePanel() {
   };
 
   return (
-    <div className="bg-white shadow rounded-lg p-6">
-      <h2 className="text-xl font-semibold text-gray-800 mb-6">勤怠</h2>
+    <div className="rounded-lg bg-white p-6 shadow">
+      <h2 className="mb-6 text-xl font-semibold text-gray-800">勤怠</h2>
 
       <CurrentStatus
         currentTime={currentTime}

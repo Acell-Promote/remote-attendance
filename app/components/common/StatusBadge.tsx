@@ -12,8 +12,8 @@ export default function StatusBadge({
 }: StatusBadgeProps) {
   return (
     <span
-      className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(
-        status
+      className={`inline-flex rounded-full px-2 text-xs font-semibold leading-5 ${getStatusColor(
+        status,
       )} ${className}`}
     >
       {getStatusText(status)}

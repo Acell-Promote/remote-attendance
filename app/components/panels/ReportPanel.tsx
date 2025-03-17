@@ -82,7 +82,7 @@ export default function ReportPanel() {
       // Refresh the selected report
       console.log("Refreshing report after comment:", selectedReport.id);
       const reportData = await apiRequest<ApiResponse<ReportWithRelations>>(
-        `/api/reports/${selectedReport.id}`
+        `/api/reports/${selectedReport.id}`,
       );
       if (reportData.data) {
         setSelectedReport(reportData.data);
@@ -107,7 +107,7 @@ export default function ReportPanel() {
             content: selectedReport.content,
             title: selectedReport.title,
           }),
-        }
+        },
       );
       if (result.data) {
         setSelectedReport(result.data);
@@ -120,19 +120,19 @@ export default function ReportPanel() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex items-center justify-between">
         <h2 className="text-xl font-semibold text-gray-800">日報管理</h2>
         {view === "list" ? (
           <button
             onClick={() => setView("editor")}
-            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+            className="inline-flex items-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
           >
             新規作成
           </button>
         ) : (
           <button
             onClick={() => setView("list")}
-            className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+            className="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
           >
             一覧に戻る
           </button>

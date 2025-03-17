@@ -1,7 +1,7 @@
 import { ReportStatus } from "@/app/types/report";
 
 export function formatReportDate(
-  dateString: string | undefined | Date
+  dateString: string | undefined | Date,
 ): string {
   if (!dateString) return "";
   const date =

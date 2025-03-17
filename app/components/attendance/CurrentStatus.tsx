@@ -6,7 +6,7 @@ interface CurrentStatusProps {
   currentTime: Date | null;
   attendanceState: AttendanceState;
   onClockAction: (
-    action: (typeof ATTENDANCE.CLOCK_ACTIONS)[keyof typeof ATTENDANCE.CLOCK_ACTIONS]
+    action: (typeof ATTENDANCE.CLOCK_ACTIONS)[keyof typeof ATTENDANCE.CLOCK_ACTIONS],
   ) => void;
 }
 
@@ -19,11 +19,11 @@ export default function CurrentStatus({
 
   return (
     <div className="mb-8">
-      <h3 className="text-lg font-medium text-gray-700 mb-4">
+      <h3 className="mb-4 text-lg font-medium text-gray-700">
         {UI_MESSAGES.CURRENT_STATUS}
       </h3>
       <div className="mb-6">
-        <div className="text-center mb-4">
+        <div className="mb-4 text-center">
           <p className="text-gray-600">{UI_MESSAGES.CURRENT_TIME}</p>
           {currentTime && (
             <>
@@ -34,8 +34,8 @@ export default function CurrentStatus({
         </div>
 
         {status === "clocked-in" && lastClockIn && (
-          <div className="bg-green-50 border border-green-200 rounded-md p-4 mb-4">
-            <p className="text-green-800 font-medium">
+          <div className="mb-4 rounded-md border border-green-200 bg-green-50 p-4">
+            <p className="font-medium text-green-800">
               {UI_MESSAGES.CURRENTLY_WORKING}
             </p>
             <p className="text-green-600">
@@ -46,7 +46,7 @@ export default function CurrentStatus({
         )}
 
         {error && (
-          <div className="bg-red-50 border border-red-200 rounded-md p-4 mb-4">
+          <div className="mb-4 rounded-md border border-red-200 bg-red-50 p-4">
             <p className="text-red-800">{error}</p>
           </div>
         )}
@@ -56,21 +56,21 @@ export default function CurrentStatus({
         <button
           onClick={() =>
             onClockAction(
-              status === "idle" ? CLOCK_ACTIONS.IN : CLOCK_ACTIONS.OUT
+              status === "idle" ? CLOCK_ACTIONS.IN : CLOCK_ACTIONS.OUT,
             )
           }
           disabled={status === "loading"}
-          className={`py-3 px-6 rounded-md font-medium disabled:opacity-50 ${
+          className={`rounded-md px-6 py-3 font-medium disabled:opacity-50 ${
             status === "idle"
-              ? "bg-indigo-600 hover:bg-indigo-700 text-white"
-              : "bg-red-600 hover:bg-red-700 text-white"
+              ? "bg-indigo-600 text-white hover:bg-indigo-700"
+              : "bg-red-600 text-white hover:bg-red-700"
           }`}
         >
           {status === "loading"
             ? UI_MESSAGES.LOADING
             : status === "idle"
-            ? UI_MESSAGES.CLOCK_IN
-            : UI_MESSAGES.CLOCK_OUT}
+              ? UI_MESSAGES.CLOCK_IN
+              : UI_MESSAGES.CLOCK_OUT}
         </button>
       </div>
     </div>
