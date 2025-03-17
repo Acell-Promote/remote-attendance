@@ -1,36 +1,138 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Remote Attendance System
+
+A modern web application for managing remote work attendance and daily reports, built with Next.js and TypeScript.
+
+🌐 [Production Site](https://axpr-poc-1-302c717e5d41.herokuapp.com/)
+
+## Features
+
+- 👥 User Authentication
+
+  - Email/password authentication
+  - Role-based access control (Admin/User)
+  - Secure session management
+
+- ⏰ Attendance Management
+
+  - Clock in/out tracking
+  - Real-time attendance status
+  - Attendance history view
+  - Working hours calculation
+
+- 📝 Daily Reports
+  - Daily work report submission
+  - Report status workflow (Draft → Submitted → Reviewed)
+  - Comment system for feedback
+  - Report history and tracking
+
+## Tech Stack
+
+- **Framework**: [Next.js 15](https://nextjs.org/)
+- **Language**: [TypeScript](https://www.typescriptlang.org/)
+- **Database**: [PostgreSQL](https://www.postgresql.org/) with [Prisma](https://www.prisma.io/)
+- **Authentication**: [NextAuth.js](https://next-auth.js.org/)
+- **Styling**: [Tailwind CSS](https://tailwindcss.com/)
+- **Package Manager**: [pnpm](https://pnpm.io/)
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+
+- Node.js 23.x
+- pnpm 10.x
+- PostgreSQL 17
+
+### Local Development
+
+1. Clone the repository:
+
+   ```bash
+   git clone <repository-url>
+   cd remote-attendance
+   ```
+
+2. Install dependencies:
+
+   ```bash
+   pnpm install
+   ```
+
+3. Set up environment variables:
+
+   ```bash
+   cp .env.example .env
+   # Edit .env with your configuration
+   ```
+
+4. Set up the database:
+
+   ```bash
+   pnpm prisma generate
+   pnpm prisma db push
+   pnpm seed
+   ```
+
+5. Start the development server:
+
+   ```bash
+   pnpm dev
+   ```
+
+6. Open [http://localhost:3000](http://localhost:3000) in your browser
+
+### Using Docker
+
+1. Build and start the containers:
+
+   ```bash
+   make run
+   ```
+
+2. Stop the containers:
+   ```bash
+   make down
+   ```
+
+## Test Accounts
+
+- **Admin User**:
+
+  - Email: admin@example.com
+  - Password: password123
+
+- **Regular User**:
+  - Email: test@example.com
+  - Password: password123
+
+## Deployment
+
+The application is deployed on Heroku. Deployments are automatically triggered when changes are pushed to the main branch.
+
+### Manual Deployment
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git push heroku main
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Project Structure
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```
+app/
+├── api/              # API routes
+│   ├── auth/         # Authentication endpoints
+│   ├── attendance/   # Attendance endpoints
+│   └── reports/      # Daily reports endpoints
+├── components/       # Reusable components
+├── lib/             # Shared utilities
+└── types/           # TypeScript definitions
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Contributing
 
-## Learn More
+1. Create a feature branch
+2. Make your changes
+3. Submit a pull request
 
-To learn more about Next.js, take a look at the following resources:
+## License
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+This project is private and confidential. All rights reserved.
