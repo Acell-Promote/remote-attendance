@@ -38,17 +38,28 @@ export async function checkReportAccess(
 ) {
   const report = await prisma.report.findUnique({
     where: { id: reportId },
+    include: {
+      user: true,
+    },
   });
 
   if (!report) {
     throw new ApiError("レポートが見つかりません", 404);
   }
 
-  if (report.userId !== session.user.id) {
-    throw new ApiError("このレポートにアクセスする権限がありません", 403);
+  // Allow access if:
+  // 1. User is the report owner
+  // 2. User is an admin
+  // 3. User is the assigned reviewer
+  if (
+    report.userId === session.user.id ||
+    session.user.role === "ADMIN" ||
+    report.reviewerId === session.user.id
+  ) {
+    return report;
   }
 
-  return report;
+  throw new ApiError("このレポートにアクセスする権限がありません", 403);
 }
 
 // Validate report status
