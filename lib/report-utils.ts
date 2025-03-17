@@ -36,7 +36,7 @@ export const reportInclude = {
  */
 export async function checkReportAccess(
   reportId: string,
-  session: SessionWithId
+  session: SessionWithId,
 ) {
   try {
     const report = await prisma.report.findUnique({

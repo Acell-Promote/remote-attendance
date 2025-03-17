@@ -57,7 +57,7 @@ export const authOptions: AuthOptions = {
 
           if (!user || !user.password) {
             console.warn(
-              `Auth failed: User not found for email ${credentials.email}`
+              `Auth failed: User not found for email ${credentials.email}`,
             );
             throw new Error(AUTH_CONSTANTS.ERROR_MESSAGES.USER_NOT_FOUND);
           }
@@ -66,7 +66,7 @@ export const authOptions: AuthOptions = {
           const isValid = await compare(credentials.password, user.password);
           if (!isValid) {
             console.warn(
-              `Auth failed: Invalid password for email ${credentials.email}`
+              `Auth failed: Invalid password for email ${credentials.email}`,
             );
             throw new Error(AUTH_CONSTANTS.ERROR_MESSAGES.INVALID_CREDENTIALS);
           }

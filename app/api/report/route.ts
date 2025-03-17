@@ -51,7 +51,7 @@ export async function GET(request: NextRequest) {
 
         return total + hoursWorked;
       },
-      0
+      0,
     );
 
     return createApiResponse({

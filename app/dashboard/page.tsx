@@ -24,7 +24,7 @@ export default function DashboardPage() {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500 mx-auto"></div>
+          <div className="mx-auto h-12 w-12 animate-spin rounded-full border-b-2 border-t-2 border-indigo-500"></div>
           <p className="mt-4 text-gray-600">読み込み中...</p>
         </div>
       </div>
@@ -38,17 +38,17 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white shadow">
-        <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8 flex justify-between items-center">
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-6 sm:px-6 lg:px-8">
           <h1 className="text-3xl font-bold text-gray-900">
             リモート勤怠システム
           </h1>
           <div className="flex items-center">
-            <span className="text-gray-700 mr-4">
+            <span className="mr-4 text-gray-700">
               ようこそ、{session.user?.name || session.user?.email}さん
             </span>
             <button
               onClick={() => router.push("/api/auth/signout")}
-              className="bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded"
+              className="rounded bg-red-500 px-4 py-2 text-white hover:bg-red-600"
             >
               サインアウト
             </button>
@@ -56,7 +56,7 @@ export default function DashboardPage() {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+      <main className="mx-auto max-w-7xl py-6 sm:px-6 lg:px-8">
         <div className="px-4 py-6 sm:px-0">
           <div className="border-b border-gray-200">
             <nav className="-mb-px flex space-x-8">
@@ -65,8 +65,8 @@ export default function DashboardPage() {
                 className={`${
                   activeTab === "attendance"
                     ? "border-indigo-500 text-indigo-600"
-                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+                    : "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700"
+                } whitespace-nowrap border-b-2 px-1 py-4 text-sm font-medium`}
               >
                 勤怠
               </button>
@@ -75,8 +75,8 @@ export default function DashboardPage() {
                 className={`${
                   activeTab === "report"
                     ? "border-indigo-500 text-indigo-600"
-                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+                    : "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700"
+                } whitespace-nowrap border-b-2 px-1 py-4 text-sm font-medium`}
               >
                 レポート
               </button>

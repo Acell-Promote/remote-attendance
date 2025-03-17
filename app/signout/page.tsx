@@ -9,10 +9,10 @@ import { useRouter } from "next/navigation";
  */
 function LoadingSpinner() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+    <div className="flex min-h-screen items-center justify-center bg-gray-50">
       <div className="text-center" role="alert" aria-live="polite">
         <div
-          className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500 mx-auto"
+          className="mx-auto h-12 w-12 animate-spin rounded-full border-b-2 border-t-2 border-indigo-500"
           aria-hidden="true"
         />
         <p className="mt-4 text-gray-600">サインアウト中...</p>
@@ -61,23 +61,23 @@ export default function SignOutPage() {
 
   return (
     <div
-      className="min-h-screen flex items-center justify-center bg-gray-50"
+      className="flex min-h-screen items-center justify-center bg-gray-50"
       role="dialog"
       aria-labelledby="signout-title"
       aria-describedby="signout-description"
     >
-      <div className="bg-white p-8 rounded-lg shadow-md max-w-md w-full">
+      <div className="w-full max-w-md rounded-lg bg-white p-8 shadow-md">
         <h2
           id="signout-title"
-          className="text-2xl font-bold text-gray-900 mb-4 text-center"
+          className="mb-4 text-center text-2xl font-bold text-gray-900"
         >
           サインアウトの確認
         </h2>
-        <p id="signout-description" className="text-gray-600 mb-6 text-center">
+        <p id="signout-description" className="mb-6 text-center text-gray-600">
           本当にサインアウトしますか？
         </p>
         {error && (
-          <p className="text-red-500 mb-4 text-center" role="alert">
+          <p className="mb-4 text-center text-red-500" role="alert">
             {error}
           </p>
         )}
@@ -85,14 +85,14 @@ export default function SignOutPage() {
           <button
             onClick={handleCancel}
             disabled={isLoading}
-            className="px-4 py-2 text-gray-700 bg-gray-100 rounded hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-300 disabled:opacity-50"
+            className="rounded bg-gray-100 px-4 py-2 text-gray-700 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-300 disabled:opacity-50"
           >
             キャンセル
           </button>
           <button
             onClick={handleSignOut}
             disabled={isLoading}
-            className="px-4 py-2 text-white bg-red-500 rounded hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 disabled:opacity-50"
+            className="rounded bg-red-500 px-4 py-2 text-white hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 disabled:opacity-50"
           >
             サインアウト
           </button>

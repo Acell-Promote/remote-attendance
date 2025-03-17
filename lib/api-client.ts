@@ -11,7 +11,7 @@ export class ApiError extends Error {
 
 export async function apiRequest<T>(
   endpoint: string,
-  { params, ...options }: RequestOptions = {}
+  { params, ...options }: RequestOptions = {},
 ): Promise<T> {
   try {
     const url = new URL(endpoint, window.location.origin);
@@ -42,7 +42,7 @@ export async function apiRequest<T>(
       throw error;
     }
     throw new ApiError(
-      error instanceof Error ? error.message : "エラーが発生しました"
+      error instanceof Error ? error.message : "エラーが発生しました",
     );
   }
 }

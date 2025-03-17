@@ -59,7 +59,7 @@ export default function ReportList({
   }) => (
     <th
       scope="col"
-      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
+      className="cursor-pointer px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500"
       onClick={() => handleSort(field)}
     >
       {label}
@@ -77,42 +77,42 @@ export default function ReportList({
             <tr className="bg-gray-50">
               <SortHeader field="date" label="日付" />
               <SortHeader field="status" label="ステータス" />
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
                 コメント
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
                 最終更新
               </th>
-              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">
                 アクション
               </th>
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
+          <tbody className="divide-y divide-gray-200 bg-white">
             {sortedReports.map((report) => (
               <tr
                 key={report.id}
                 onClick={() => onReportClick(report)}
-                className="group hover:bg-indigo-50/60 cursor-pointer transition-all duration-150 ease-in-out"
+                className="group cursor-pointer transition-all duration-150 ease-in-out hover:bg-indigo-50/60"
               >
-                <td className="px-6 py-4 whitespace-nowrap">
+                <td className="whitespace-nowrap px-6 py-4">
                   <div className="flex flex-col">
-                    <span className="text-sm font-medium text-gray-900 group-hover:text-indigo-600 transition-colors duration-150">
+                    <span className="text-sm font-medium text-gray-900 transition-colors duration-150 group-hover:text-indigo-600">
                       {formatSimpleDate(report.date)}
                     </span>
-                    <span className="text-xs text-gray-500 mt-1 line-clamp-1 group-hover:text-gray-600 transition-colors duration-150">
+                    <span className="mt-1 line-clamp-1 text-xs text-gray-500 transition-colors duration-150 group-hover:text-gray-600">
                       {report.title}
                     </span>
                   </div>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap">
+                <td className="whitespace-nowrap px-6 py-4">
                   <StatusBadge status={report.status} />
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap">
+                <td className="whitespace-nowrap px-6 py-4">
                   <div className="flex items-center space-x-1.5">
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
-                      className="h-3 w-3 text-gray-400 group-hover:text-indigo-400 transition-colors duration-150"
+                      className="h-3 w-3 text-gray-400 transition-colors duration-150 group-hover:text-indigo-400"
                       viewBox="0 0 20 20"
                       fill="currentColor"
                     >
@@ -122,27 +122,27 @@ export default function ReportList({
                         clipRule="evenodd"
                       />
                     </svg>
-                    <span className="text-xs text-gray-600 group-hover:text-indigo-600 transition-colors duration-150">
+                    <span className="text-xs text-gray-600 transition-colors duration-150 group-hover:text-indigo-600">
                       {report.comments.length}
                     </span>
                   </div>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap">
+                <td className="whitespace-nowrap px-6 py-4">
                   <div className="flex flex-col">
-                    <span className="text-sm text-gray-600 group-hover:text-indigo-600 transition-colors duration-150">
+                    <span className="text-sm text-gray-600 transition-colors duration-150 group-hover:text-indigo-600">
                       {new Date(report.updatedAt).toLocaleString("ja-JP")}
                     </span>
-                    <span className="text-xs text-gray-500 mt-1 group-hover:text-gray-600 transition-colors duration-150">
+                    <span className="mt-1 text-xs text-gray-500 transition-colors duration-150 group-hover:text-gray-600">
                       {report.user.name || report.user.email}
                     </span>
                   </div>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                  <div className="inline-flex items-center text-indigo-600 opacity-0 group-hover:opacity-100 transition-all duration-200 ease-out transform translate-x-[-8px] group-hover:translate-x-0">
+                <td className="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
+                  <div className="inline-flex translate-x-[-8px] transform items-center text-indigo-600 opacity-0 transition-all duration-200 ease-out group-hover:translate-x-0 group-hover:opacity-100">
                     <span className="font-medium">詳細を見る</span>
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
-                      className="h-3 w-3 ml-1.5 transition-transform duration-200 ease-out group-hover:translate-x-0.5"
+                      className="ml-1.5 h-3 w-3 transition-transform duration-200 ease-out group-hover:translate-x-0.5"
                       viewBox="0 0 20 20"
                       fill="currentColor"
                     >
@@ -161,8 +161,8 @@ export default function ReportList({
       </div>
 
       {total > reports.length && (
-        <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:rounded-lg sm:px-6 shadow-sm ring-1 ring-gray-200">
-          <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+        <div className="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 shadow-sm ring-1 ring-gray-200 sm:rounded-lg sm:px-6">
+          <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
             <div>
               <p className="text-sm text-gray-700">
                 全<span className="font-medium">{total}</span>件中{" "}
