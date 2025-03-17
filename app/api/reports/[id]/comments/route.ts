@@ -11,20 +11,11 @@ import { ApiError } from "@/lib/api-utils";
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ): Promise<NextResponse> {
   try {
     const session = (await checkAuth()) as unknown as SessionWithId;
-    console.log("Comment POST session:", {
-      session,
-      hasSession: !!session,
-      userId: session?.user?.id,
-      userRole: session?.user?.role,
-    });
-
-    const { id } = params;
-    console.log("Comment POST params:", { id });
-
+    const { id } = await params;
     // Check if user has access to the report
     await checkReportAccess(id, session);
 
@@ -34,12 +25,6 @@ export async function POST(
     if (!content || typeof content !== "string" || !content.trim()) {
       throw new ApiError("コメント内容は必須です", 400);
     }
-
-    console.log("Creating comment:", {
-      content,
-      userId: session.user.id,
-      reportId: id,
-    });
 
     // Create the comment
     const comment = await prisma.comment.create({
@@ -58,11 +43,8 @@ export async function POST(
       },
     });
 
-    console.log("Comment created:", comment);
-
     return createApiResponse(comment);
   } catch (error) {
-    console.error("Error in comment POST:", error);
     return createErrorResponse(error);
   }
 }
@@ -70,11 +52,11 @@ export async function POST(
 // Get comments for a report
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ): Promise<NextResponse> {
   try {
     const session = (await checkAuth()) as unknown as SessionWithId;
-    const { id } = params;
+    const { id } = await params;
     await checkReportAccess(id, session);
 
     const comments = await prisma.comment.findMany({

@@ -4,16 +4,9 @@ on:
   push:
     branches:
       - main
-  pull_request:
-    types:
-      - closed
-    branches:
-      - main
 
 jobs:
   deploy:
-    # Only run if PR is merged or direct push to main
-    if: github.event.pull_request.merged == true || github.event_name == 'push'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -37,18 +30,21 @@ jobs:
         run: |
           curl https://cli-assets.heroku.com/install.sh | sh
 
+      - name: Configure Git
+        run: |
+          git config --global user.email "${{ secrets.HEROKU_EMAIL }}"
+          git config --global user.name "GitHub Action"
+
       - name: Deploy to Heroku
         uses: akhileshns/heroku-deploy@v3.14.15
         with:
           heroku_api_key: ${{ secrets.HEROKU_API_KEY }}
           heroku_app_name: ${{ secrets.HEROKU_APP_NAME }}
           heroku_email: ${{ secrets.HEROKU_EMAIL }}
-          healthcheck: "https://${{ secrets.HEROKU_APP_NAME }}.herokuapp.com/health"
-          rollbackonhealthcheckfailed: true
-          checkstring: "ok"
-          delay: 30
-          procfile: "web: pnpm start"
           buildpack: "https://github.com/heroku/heroku-buildpack-nodejs.git"
+          dontuseforce: false
+          usedocker: false
+          dontautocreate: false
         env:
           HD_NODE_ENV: "production"
           HD_COREPACK_ENABLE: "true"
