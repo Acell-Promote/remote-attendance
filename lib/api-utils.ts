@@ -1,16 +1,14 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
-
-export type ApiResponse<T> = {
-  success: boolean;
-  data?: T;
-  message?: string;
-  error?: string;
-};
+import { ApiResponse } from "@/app/types/api";
+import { HTTP_STATUS, ERROR_MESSAGES } from "@/lib/constants/api";
 
 export class ApiError extends Error {
-  constructor(message: string, public status: number = 400) {
+  constructor(
+    message: string,
+    public status: number = HTTP_STATUS.BAD_REQUEST
+  ) {
     super(message);
     this.name = "ApiError";
   }
@@ -19,7 +17,7 @@ export class ApiError extends Error {
 export async function checkAuth() {
   const session = await getServerSession(authOptions);
   if (!session) {
-    throw new ApiError("認証が必要です", 401);
+    throw new ApiError(ERROR_MESSAGES.UNAUTHORIZED, HTTP_STATUS.UNAUTHORIZED);
   }
   return session;
 }
@@ -27,7 +25,7 @@ export async function checkAuth() {
 export function createApiResponse<T>(
   data?: T,
   message?: string,
-  status: number = 200
+  status: number = HTTP_STATUS.OK
 ): NextResponse<ApiResponse<T>> {
   const success = status >= 200 && status < 300;
 
@@ -54,22 +52,27 @@ export function createErrorResponse(
     );
   }
 
-  console.error("Unexpected error:", error);
   return NextResponse.json(
     {
       success: false,
-      error: "予期せぬエラーが発生しました",
+      error: ERROR_MESSAGES.INTERNAL_SERVER_ERROR,
     },
-    { status: 500 }
+    { status: HTTP_STATUS.INTERNAL_SERVER_ERROR }
   );
 }
 
 // Common error responses
 export const unauthorizedResponse = () =>
-  createErrorResponse(new ApiError("認証が必要です", 401));
+  createErrorResponse(
+    new ApiError(ERROR_MESSAGES.UNAUTHORIZED, HTTP_STATUS.UNAUTHORIZED)
+  );
 
 export const forbiddenResponse = () =>
-  createErrorResponse(new ApiError("権限がありません", 403));
+  createErrorResponse(
+    new ApiError(ERROR_MESSAGES.FORBIDDEN, HTTP_STATUS.FORBIDDEN)
+  );
 
 export const notFoundResponse = () =>
-  createErrorResponse(new ApiError("リソースが見つかりません", 404));
+  createErrorResponse(
+    new ApiError(ERROR_MESSAGES.NOT_FOUND, HTTP_STATUS.NOT_FOUND)
+  );
