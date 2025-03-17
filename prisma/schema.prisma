@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -15,21 +9,16 @@ datasource db {
 
 model User {
   id              String       @id @default(uuid())
-  name            String?
   email           String       @unique
+  name            String?
   password        String
-  role            Role         @default(USER)
   createdAt       DateTime     @default(now())
   updatedAt       DateTime     @updatedAt
+  role            Role         @default(USER)
   attendances     Attendance[]
-  reports         Report[]     @relation("UserReports")
-  reviewedReports Report[]     @relation("ReviewedReports")
   comments        Comment[]
-}
-
-enum Role {
-  ADMIN
-  USER
+  reviewedReports Report[]     @relation("ReviewedReports")
+  reports         Report[]     @relation("UserReports")
 }
 
 model Attendance {
@@ -42,34 +31,39 @@ model Attendance {
   user      User      @relation(fields: [userId], references: [id])
 }
 
-enum ReportStatus {
-  DRAFT
-  SUBMITTED
-  REVIEWED
-}
-
 model Report {
   id         String       @id @default(uuid())
   userId     String
-  user       User         @relation("UserReports", fields: [userId], references: [id])
-  date       DateTime     @default(now())
-  content    String       @db.Text
-  status     ReportStatus @default(DRAFT)
-  reviewerId String?
-  reviewer   User?        @relation("ReviewedReports", fields: [reviewerId], references: [id])
-  comments   Comment[]
+  content    String
   createdAt  DateTime     @default(now())
+  date       DateTime     @default(now())
+  reviewerId String?
   updatedAt  DateTime     @updatedAt
+  status     ReportStatus @default(DRAFT)
   title      String
+  comments   Comment[]
+  reviewer   User?        @relation("ReviewedReports", fields: [reviewerId], references: [id])
+  user       User         @relation("UserReports", fields: [userId], references: [id])
 }
 
 model Comment {
   id        String   @id @default(uuid())
   reportId  String
-  report    Report   @relation(fields: [reportId], references: [id])
   userId    String
-  user      User     @relation(fields: [userId], references: [id])
   content   String
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  updatedAt DateTime @default(now()) @updatedAt
+  report    Report   @relation(fields: [reportId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
+}
+
+enum Role {
+  ADMIN
+  USER
+}
+
+enum ReportStatus {
+  DRAFT
+  SUBMITTED
+  REVIEWED
 }
