@@ -1,26 +1,31 @@
 export function formatTime(date: Date): string {
-  return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  return new Intl.DateTimeFormat("ja-JP", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).format(date);
 }
 
 export function formatDate(date: Date): string {
-  return date.toLocaleDateString("ja-JP", {
+  return new Intl.DateTimeFormat("ja-JP", {
     weekday: "long",
     year: "numeric",
     month: "long",
     day: "numeric",
-  });
+  }).format(date);
 }
 
 export function formatDateTime(dateString: string | Date): string {
   if (!dateString) return "N/A";
   const date = dateString instanceof Date ? dateString : new Date(dateString);
-  return date.toLocaleString("ja-JP", {
+  return new Intl.DateTimeFormat("ja-JP", {
     year: "numeric",
     month: "short",
     day: "numeric",
     hour: "2-digit",
     minute: "2-digit",
-  });
+    hour12: false,
+  }).format(date);
 }
 
 export function calculateDuration(
