@@ -5,30 +5,48 @@ import {
   createApiResponse,
   createErrorResponse,
 } from "@/lib/api-utils";
-import { createCommentSchema } from "@/lib/validations";
 import { checkReportAccess } from "@/lib/report-utils";
 import { SessionWithId } from "@/app/types/auth";
+import { ApiError } from "@/lib/api-utils";
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: { id: string } }
 ): Promise<NextResponse> {
   try {
     const session = (await checkAuth()) as unknown as SessionWithId;
-    const { id } = await params;
+    console.log("Comment POST session:", {
+      session,
+      hasSession: !!session,
+      userId: session?.user?.id,
+      userRole: session?.user?.role,
+    });
+
+    const { id } = params;
+    console.log("Comment POST params:", { id });
+
+    // Check if user has access to the report
     await checkReportAccess(id, session);
 
+    // Parse and validate the comment content
     const body = await request.json();
-    const validatedData = createCommentSchema.parse({
-      ...body,
+    const content = body.content;
+    if (!content || typeof content !== "string" || !content.trim()) {
+      throw new ApiError("コメント内容は必須です", 400);
+    }
+
+    console.log("Creating comment:", {
+      content,
+      userId: session.user.id,
       reportId: id,
     });
 
+    // Create the comment
     const comment = await prisma.comment.create({
       data: {
-        content: validatedData.content,
+        content,
         userId: session.user.id,
-        reportId: validatedData.reportId,
+        reportId: id,
       },
       include: {
         user: {
@@ -40,8 +58,11 @@ export async function POST(
       },
     });
 
-    return createApiResponse(comment, "コメントを追加しました");
+    console.log("Comment created:", comment);
+
+    return createApiResponse(comment);
   } catch (error) {
+    console.error("Error in comment POST:", error);
     return createErrorResponse(error);
   }
 }
@@ -49,11 +70,11 @@ export async function POST(
 // Get comments for a report
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: { id: string } }
 ): Promise<NextResponse> {
   try {
     const session = (await checkAuth()) as unknown as SessionWithId;
-    const { id } = await params;
+    const { id } = params;
     await checkReportAccess(id, session);
 
     const comments = await prisma.comment.findMany({
