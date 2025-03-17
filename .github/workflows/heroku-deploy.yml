@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-      - feature/automate-ci-cd-v4
 
 jobs:
   deploy:
