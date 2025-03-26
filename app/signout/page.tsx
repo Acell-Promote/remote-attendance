@@ -47,7 +47,11 @@ export default function SignOutPage() {
     try {
       setError(null);
       setIsLoading(true);
-      await signOut({ callbackUrl: "/login" });
+      const baseUrl = window.location.origin;
+      await signOut({
+        redirect: true,
+        callbackUrl: `${baseUrl}/login`,
+      });
     } catch (err) {
       setIsLoading(false);
       setError("サインアウトに失敗しました。もう一度お試しください。");
