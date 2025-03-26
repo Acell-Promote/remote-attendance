@@ -1,3 +1,6 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -5,56 +8,6 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
-}
-
-model User {
-  id              String       @id @default(uuid())
-  email           String       @unique
-  name            String?
-  password        String
-  createdAt       DateTime     @default(now())
-  updatedAt       DateTime     @updatedAt
-  role            Role         @default(USER)
-  attendances     Attendance[]
-  comments        Comment[]
-  reviewedReports Report[]     @relation("ReviewedReports")
-  reports         Report[]     @relation("UserReports")
-}
-
-model Attendance {
-  id        String    @id @default(uuid())
-  userId    String
-  clockIn   DateTime  @default(now())
-  clockOut  DateTime?
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  user      User      @relation(fields: [userId], references: [id])
-}
-
-model Report {
-  id         String       @id @default(uuid())
-  userId     String
-  content    String
-  createdAt  DateTime     @default(now())
-  date       DateTime     @default(now())
-  reviewerId String?
-  updatedAt  DateTime     @updatedAt
-  status     ReportStatus @default(DRAFT)
-  title      String
-  comments   Comment[]
-  reviewer   User?        @relation("ReviewedReports", fields: [reviewerId], references: [id])
-  user       User         @relation("UserReports", fields: [userId], references: [id])
-}
-
-model Comment {
-  id        String   @id @default(uuid())
-  reportId  String
-  userId    String
-  content   String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @default(now()) @updatedAt
-  report    Report   @relation(fields: [reportId], references: [id])
-  user      User     @relation(fields: [userId], references: [id])
 }
 
 enum Role {
@@ -66,4 +19,66 @@ enum ReportStatus {
   DRAFT
   SUBMITTED
   REVIEWED
+  APPROVED
+  REJECTED
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  name      String?
+  password  String
+  role      Role     @default(USER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  attendances Attendance[]
+  reports     Report[]
+  reviews     Report[]     @relation("reviewer")
+  comments    Comment[]
+}
+
+model Attendance {
+  id              String    @id @default(uuid())
+  userId          String
+  clockIn         DateTime  @default(now())
+  clockOut        DateTime?
+  plannedClockOut DateTime
+  breakMinutes    Int       @default(0)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  user            User      @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+}
+
+model Report {
+  id         String       @id @default(uuid())
+  userId     String
+  reviewerId String?
+  title      String
+  content    String
+  status     ReportStatus @default(DRAFT)
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+  user       User         @relation(fields: [userId], references: [id])
+  reviewer   User?        @relation("reviewer", fields: [reviewerId], references: [id])
+  comments   Comment[]
+
+  @@index([userId])
+  @@index([reviewerId])
+}
+
+model Comment {
+  id        String   @id @default(uuid())
+  reportId  String
+  userId    String
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  report    Report   @relation(fields: [reportId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@index([reportId])
+  @@index([userId])
 }
