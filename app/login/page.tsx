@@ -44,9 +44,9 @@ export default function LoginPage() {
     <AuthForm
       title="リモート勤怠システム"
       subtitle="アカウントにサインイン"
-      alternativeText="または"
+      alternativeText="アカウントをお持ちでない方は"
       alternativeLink="/register"
-      alternativeLinkText="新規アカウント登録はこちら"
+      alternativeLinkText="今すぐ新規登録"
       fields={loginFields}
       onSubmit={handleSubmit}
       submitButtonText="サインイン"
