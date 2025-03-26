@@ -4,14 +4,15 @@ FROM node:23-alpine
 
 WORKDIR /app
 
-# Install dependencies based on the preferred package manager
+# Copy package files and prisma schema first
 COPY package.json pnpm-lock.yaml* ./
+COPY prisma ./prisma/
 
 # Clear cache and install dependencies with exact versions
 RUN corepack enable pnpm && \
   pnpm install --frozen-lockfile
 
-# Copy all application files
+# Copy remaining application files
 COPY . .
 
 # Generate Prisma client

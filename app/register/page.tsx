@@ -8,7 +8,8 @@ const registerFields = [
     id: "name",
     label: "名前",
     type: "text",
-    placeholder: "名前（任意）",
+    placeholder: "名前",
+    required: true,
     autoComplete: "name",
   },
   {
@@ -71,14 +72,14 @@ export default function RegisterPage() {
 
   return (
     <AuthForm
-      title="アカウント登録"
-      subtitle="新規アカウントを作成"
-      alternativeText="または"
+      title="リモート勤怠システム"
+      subtitle="新規アカウントを作成して始めましょう"
+      alternativeText="既にアカウントをお持ちの方は"
       alternativeLink="/login"
-      alternativeLinkText="既にアカウントをお持ちの方はこちら"
+      alternativeLinkText="こちらからログイン"
       fields={registerFields}
       onSubmit={handleSubmit}
-      submitButtonText="登録"
+      submitButtonText="アカウント作成"
     />
   );
 }
