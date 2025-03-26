@@ -45,11 +45,13 @@ model Attendance {
   clockOut        DateTime?
   plannedClockOut DateTime
   breakMinutes    Int       @default(0)
+  is_active       Boolean   @default(true)
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
   user            User      @relation(fields: [userId], references: [id])
 
   @@index([userId])
+  @@index([is_active])
 }
 
 model Report {

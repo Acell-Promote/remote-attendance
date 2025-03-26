@@ -49,6 +49,7 @@ async function main() {
       clockIn: new Date(yesterday.setHours(9, 0, 0)),
       clockOut: new Date(yesterday.setHours(17, 0, 0)),
       plannedClockOut: new Date(yesterday.setHours(17, 0, 0)),
+      is_active: false,
     },
   });
 
@@ -64,6 +65,7 @@ async function main() {
       clockIn: new Date(today.setHours(9, 0, 0)),
       clockOut: null,
       plannedClockOut: new Date(today.setHours(17, 0, 0)),
+      is_active: true,
     },
   });
 }
