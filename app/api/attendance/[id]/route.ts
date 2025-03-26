@@ -98,16 +98,18 @@ export async function PUT(
     }
 
     // Update the record
+    const updateData = {
+      clockIn: validatedData.clockIn,
+      clockOut: validatedData.clockOut,
+      plannedClockOut: validatedData.plannedClockOut,
+      breakMinutes: validatedData.breakMinutes,
+      is_active: validatedData.clockOut ? false : true,
+      updatedAt: new Date(),
+    };
+
     const updatedAttendance = await prisma.attendance.update({
       where: { id },
-      data: {
-        clockIn: validatedData.clockIn,
-        clockOut: validatedData.clockOut,
-        plannedClockOut: validatedData.plannedClockOut,
-        breakMinutes: validatedData.breakMinutes,
-        is_active: validatedData.clockOut ? false : true,
-        updatedAt: new Date(),
-      },
+      data: updateData,
     });
 
     return createApiResponse(updatedAttendance, "勤怠記録を更新しました");
