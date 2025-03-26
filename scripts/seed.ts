@@ -1,4 +1,4 @@
-import { PrismaClient, ReportStatus, Role } from "@prisma/client";
+import { PrismaClient, Role } from "@prisma/client";
 import { hash } from "bcryptjs";
 
 const prisma = new PrismaClient();
@@ -48,6 +48,7 @@ async function main() {
       userId: user.id,
       clockIn: new Date(yesterday.setHours(9, 0, 0)),
       clockOut: new Date(yesterday.setHours(17, 0, 0)),
+      plannedClockOut: new Date(yesterday.setHours(17, 0, 0)),
     },
   });
 
@@ -62,60 +63,9 @@ async function main() {
       userId: user.id,
       clockIn: new Date(today.setHours(9, 0, 0)),
       clockOut: null,
+      plannedClockOut: new Date(today.setHours(17, 0, 0)),
     },
   });
-
-  // Create some reports
-  const reports = [
-    {
-      id: "report-1",
-      date: yesterday,
-      title: "昨日の業務報告",
-      content:
-        "昨日の業務報告:\n\n1. プロジェクトAのコーディング\n2. チームミーティング参加\n3. ドキュメント作成",
-      status: ReportStatus.REVIEWED,
-      userId: user.id,
-      reviewerId: admin.id,
-    },
-    {
-      id: "report-2",
-      date: today,
-      title: "本日の業務報告",
-      content:
-        "本日の業務報告:\n\n1. バグ修正\n2. 新機能の実装\n3. コードレビュー",
-      status: ReportStatus.SUBMITTED,
-      userId: user.id,
-    },
-  ];
-
-  for (const report of reports) {
-    await prisma.report.upsert({
-      where: { id: report.id },
-      update: {},
-      create: report,
-    });
-
-    if (report.id === "report-1") {
-      // Add some comments to the first report
-      await prisma.comment.create({
-        data: {
-          content: "良い進捗です。引き続きよろしくお願いします。",
-          userId: admin.id,
-          reportId: report.id,
-        },
-      });
-
-      await prisma.comment.create({
-        data: {
-          content: "ご確認ありがとうございます。",
-          userId: user.id,
-          reportId: report.id,
-        },
-      });
-    }
-  }
-
-  console.log("Database has been seeded.");
 }
 
 main()
