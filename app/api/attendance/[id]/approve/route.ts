@@ -17,11 +17,11 @@ import { SessionWithId } from "@/app/types/auth";
  */
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ): Promise<NextResponse> {
   try {
     const session = (await checkAuth()) as unknown as SessionWithId;
-    const { id } = params;
+    const { id } = await params;
 
     // Get the attendance record
     const attendance = await prisma.attendance.findUnique({
