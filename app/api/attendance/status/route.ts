@@ -9,6 +9,7 @@ import { SessionWithId } from "@/app/types/auth";
 interface AttendanceStatus {
   isActive: boolean;
   lastClockIn: Date | null;
+  plannedClockOut: Date | null;
 }
 
 /**
@@ -22,7 +23,7 @@ export async function GET() {
     const activeAttendance = await prisma.attendance.findFirst({
       where: {
         userId: session.user.id,
-        clockOut: null,
+        is_active: true,
       },
       orderBy: { createdAt: "desc" },
     });
@@ -30,10 +31,18 @@ export async function GET() {
     const status: AttendanceStatus = {
       isActive: !!activeAttendance,
       lastClockIn: activeAttendance?.clockIn ?? null,
+      plannedClockOut: activeAttendance?.plannedClockOut ?? null,
     };
 
     return createApiResponse(status);
   } catch (error) {
+    if (error instanceof Error) {
+      console.error("Error details:", {
+        name: error.name,
+        message: error.message,
+        stack: error.stack,
+      });
+    }
     return createErrorResponse(error);
   }
 }
