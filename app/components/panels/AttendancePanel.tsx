@@ -152,17 +152,6 @@ export default function AttendancePanel() {
   const activeRecord = historyState?.records?.find((r) => r.is_active);
   const clockInTime = activeRecord?.clockIn;
 
-  // Debug log before render
-  console.log("[AttendancePanel] Pre-render state:", {
-    isActive,
-    isLoading,
-    clockInTime,
-    activeRecord,
-    sessionStatus,
-    initialized,
-    historyStateRecords: historyState?.records?.length,
-  });
-
   if (sessionStatus === "loading") {
     return (
       <div className="flex h-96 items-center justify-center">

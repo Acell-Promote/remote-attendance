@@ -34,18 +34,6 @@ export function CurrentStatus({
   const [breakMinutes, setBreakMinutes] = useState(0);
   const [mounted, setMounted] = useState(false);
 
-  // Log only when important state changes occur
-  useEffect(() => {
-    console.log("[CurrentStatus] State changed:", {
-      isActive,
-      isLoading,
-      clockInTime,
-      plannedClockOut,
-      breakMinutes,
-      buttonType: isActive ? "退勤 (red)" : "出勤 (blue)",
-    });
-  }, [isActive, isLoading, clockInTime, plannedClockOut, breakMinutes]);
-
   // Update current time every second after component is mounted
   useEffect(() => {
     setMounted(true);
