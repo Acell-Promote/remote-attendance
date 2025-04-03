@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
   formatDateTime,
   calculateDuration,
@@ -12,8 +12,14 @@ import {
 } from "@/app/types/attendance";
 import Pagination from "../common/Pagination";
 
+/**
+ * Component for displaying and managing attendance history records
+ * Includes filtering, editing, and pagination functionality
+ */
 interface AttendanceHistoryProps {
   historyState: AttendanceHistoryState;
+  selectedMonth: Date;
+  onMonthChange: (newMonth: Date) => void;
   onPageChange: (page: number) => void;
   onEdit?: (record: AttendanceRecord) => void;
   onDelete?: (record: AttendanceRecord) => void;
@@ -21,7 +27,9 @@ interface AttendanceHistoryProps {
 }
 
 export default function AttendanceHistory({
-  historyState: { records, loading, error, currentPage },
+  historyState,
+  selectedMonth,
+  onMonthChange,
   onPageChange,
   onEdit,
   onDelete,
@@ -38,35 +46,56 @@ export default function AttendanceHistory({
     error?: string;
   } | null>(null);
 
-  const totalPages = Math.ceil((records?.length || 0) / RECORDS_PER_PAGE);
-  const currentRecords = (records || []).slice(
-    (currentPage - 1) * RECORDS_PER_PAGE,
-    currentPage * RECORDS_PER_PAGE,
+  const { records = [], loading, error, currentPage = 1 } = historyState;
+
+  // Filter records for the selected month
+  const filteredRecords = useMemo(() => {
+    return (records || []).filter((record) => {
+      const recordDate = new Date(record.clockIn);
+      return (
+        recordDate.getFullYear() === selectedMonth.getFullYear() &&
+        recordDate.getMonth() === selectedMonth.getMonth()
+      );
+    });
+  }, [records, selectedMonth]);
+
+  const totalPages = Math.ceil(
+    (filteredRecords?.length || 0) / RECORDS_PER_PAGE,
   );
+  const currentRecords = useMemo(() => {
+    return (filteredRecords || []).slice(
+      (currentPage - 1) * RECORDS_PER_PAGE,
+      currentPage * RECORDS_PER_PAGE,
+    );
+  }, [filteredRecords, currentPage, RECORDS_PER_PAGE]);
 
   const handleEditClick = (record: AttendanceRecord) => {
-    const clockIn = formatToJSTDateTimeLocal(new Date(record.clockIn));
-    const clockOut = record.clockOut
-      ? formatToJSTDateTimeLocal(new Date(record.clockOut))
-      : null;
-    const plannedClockOut = formatToJSTDateTimeLocal(
-      new Date(record.plannedClockOut),
-    );
+    try {
+      const clockIn = formatToJSTDateTimeLocal(new Date(record.clockIn));
+      const clockOut = record.clockOut
+        ? formatToJSTDateTimeLocal(new Date(record.clockOut))
+        : null;
+      const plannedClockOut = formatToJSTDateTimeLocal(
+        new Date(record.plannedClockOut),
+      );
 
-    // Ensure we have valid datetime strings
-    if (!clockIn || !plannedClockOut) {
-      console.error("Invalid datetime values:", { clockIn, plannedClockOut });
-      return;
+      // Ensure we have valid datetime strings
+      if (!clockIn || !plannedClockOut) {
+        throw new Error("Invalid datetime values");
+      }
+
+      const editData = {
+        clockIn,
+        clockOut,
+        plannedClockOut,
+        breakMinutes: record.breakMinutes || 0,
+      };
+      setEditingId(record.id);
+      setEditData(editData);
+    } catch (error) {
+      console.error("Edit initialization failed:", error);
+      alert("編集の初期化に失敗しました");
     }
-
-    const editData = {
-      clockIn,
-      clockOut,
-      plannedClockOut,
-      breakMinutes: record.breakMinutes || 0,
-    };
-    setEditingId(record.id);
-    setEditData(editData);
   };
 
   const validateEditTimes = (
@@ -74,17 +103,37 @@ export default function AttendanceHistory({
     clockOut: string | null,
     plannedClockOut: string,
   ) => {
-    const clockInTime = new Date(clockIn);
-    const plannedTime = new Date(plannedClockOut);
+    try {
+      const clockInTime = new Date(clockIn);
+      const plannedTime = new Date(plannedClockOut);
 
-    if (clockOut) {
-      const clockOutTime = new Date(clockOut);
-      if (clockOutTime <= clockInTime) return false;
+      // Validate planned clock out time
+      if (plannedTime <= clockInTime) {
+        return {
+          isValid: false,
+          error: "予定退勤時間は出勤時間より後に設定してください",
+        };
+      }
+
+      // Validate actual clock out time if present
+      if (clockOut) {
+        const clockOutTime = new Date(clockOut);
+        if (clockOutTime <= clockInTime) {
+          return {
+            isValid: false,
+            error: "退勤時間は出勤時間より後に設定してください",
+          };
+        }
+      }
+
+      return { isValid: true };
+    } catch (error) {
+      console.error("Edit time validation failed:", error);
+      return {
+        isValid: false,
+        error: "日時の検証に失敗しました",
+      };
     }
-
-    if (plannedTime <= clockInTime) return false;
-
-    return true;
   };
 
   const handleEditDataChange = (
@@ -102,9 +151,23 @@ export default function AttendanceHistory({
           newData.breakMinutes = 0;
         } else {
           const numValue = parseInt(value.toString());
-          // Only update if it's a valid number
+          // Only update if it's a valid number and within range
           if (!isNaN(numValue)) {
             newData.breakMinutes = Math.min(999, Math.max(0, numValue));
+
+            // Validate break minutes against work duration
+            const clockIn = new Date(newData.clockIn);
+            const clockOut = newData.clockOut
+              ? new Date(newData.clockOut)
+              : null;
+            if (clockOut) {
+              const workDurationMinutes = Math.floor(
+                (clockOut.getTime() - clockIn.getTime()) / (1000 * 60),
+              );
+              if (newData.breakMinutes >= workDurationMinutes) {
+                newData.error = "休憩時間は勤務時間を超えることはできません";
+              }
+            }
           }
         }
       } else {
@@ -113,56 +176,126 @@ export default function AttendanceHistory({
 
       // Validate times when any time field changes
       if (["clockIn", "clockOut", "plannedClockOut"].includes(field)) {
-        const isValid = validateEditTimes(
+        const validation = validateEditTimes(
           newData.clockIn,
           newData.clockOut,
           newData.plannedClockOut,
         );
-        newData.error = isValid
-          ? undefined
-          : "退勤予定時間と退勤時間は出勤時間より後の時間にしてください";
+        newData.error = validation.isValid ? undefined : validation.error;
       }
 
       return newData;
     });
   };
 
-  const handleSave = (record: AttendanceRecord) => {
+  const handleSave = async (record: AttendanceRecord) => {
     if (!editData) return;
-    if (editData.error) return; // Prevent saving if there's an error
+    if (editData.error) return;
 
-    // Convert JST datetime strings to UTC ISO strings
-    const clockInJST = new Date(editData.clockIn);
-    const clockOutJST = editData.clockOut ? new Date(editData.clockOut) : null;
-    const plannedClockOutJST = new Date(editData.plannedClockOut);
+    try {
+      // Confirm if editing an active session
+      if (
+        record.is_active &&
+        !window.confirm("現在進行中の勤怠記録を編集しますか？")
+      ) {
+        return;
+      }
 
-    // Convert JST to UTC using utility function
-    const clockInUTC = convertJSTtoUTC(clockInJST);
-    const clockOutUTC = convertJSTtoUTC(clockOutJST);
-    const plannedClockOutUTC = convertJSTtoUTC(plannedClockOutJST);
+      // Convert JST datetime strings to UTC ISO strings
+      const clockInJST = new Date(editData.clockIn);
+      const clockOutJST = editData.clockOut
+        ? new Date(editData.clockOut)
+        : null;
+      const plannedClockOutJST = new Date(editData.plannedClockOut);
 
-    if (!clockInUTC || !plannedClockOutUTC) {
-      console.error("Failed to convert times to UTC");
-      return;
+      // Validate work duration
+      if (clockOutJST) {
+        const workDurationHours =
+          (clockOutJST.getTime() - clockInJST.getTime()) / (1000 * 60 * 60);
+        if (workDurationHours > 24) {
+          throw new Error("勤務時間は24時間を超えることはできません");
+        }
+      }
+
+      // Convert JST to UTC using utility function
+      const clockInUTC = convertJSTtoUTC(clockInJST);
+      const clockOutUTC = clockOutJST ? convertJSTtoUTC(clockOutJST) : null;
+      const plannedClockOutUTC = convertJSTtoUTC(plannedClockOutJST);
+
+      if (!clockInUTC || !plannedClockOutUTC) {
+        throw new Error("時間の変換に失敗しました");
+      }
+
+      const updatedRecord = {
+        ...record,
+        clockIn: clockInUTC.toISOString(),
+        clockOut: clockOutUTC?.toISOString() || null,
+        plannedClockOut: plannedClockOutUTC.toISOString(),
+        breakMinutes: parseInt(String(editData.breakMinutes || 0)),
+        is_active: !clockOutUTC,
+      };
+
+      await onEdit?.(updatedRecord);
+      setEditingId(null);
+      setEditData(null);
+    } catch (error) {
+      console.error("Save failed:", error);
+      alert(error instanceof Error ? error.message : "保存に失敗しました");
     }
-
-    const updatedRecord = {
-      ...record,
-      clockIn: clockInUTC.toISOString(),
-      clockOut: clockOutUTC?.toISOString() || null,
-      plannedClockOut: plannedClockOutUTC.toISOString(),
-      breakMinutes: parseInt(String(editData.breakMinutes || 0)),
-      is_active: !clockOutUTC, // Set is_active based on clockOut
-    };
-
-    onEdit?.(updatedRecord);
-    setEditingId(null);
-    setEditData(null);
   };
 
   const handleCancel = () => {
-    setEditingId(null);
-    setEditData(null);
+    if (window.confirm("編集をキャンセルしてもよろしいですか？")) {
+      setEditingId(null);
+      setEditData(null);
+    }
+  };
+
+  const handleDelete = async (record: AttendanceRecord) => {
+    try {
+      // Additional confirmation for active records
+      if (record.is_active) {
+        if (
+          !window.confirm(
+            "現在進行中の勤怠記録を削除しますか？\nこの操作は取り消せません。",
+          )
+        ) {
+          return;
+        }
+      } else if (!window.confirm("この勤怠記録を削除してもよろしいですか？")) {
+        return;
+      }
+
+      await onDelete?.(record);
+    } catch (error) {
+      console.error("Delete failed:", error);
+      alert("削除に失敗しました");
+    }
+  };
+
+  const handleApprovePlannedClockOut = async (record: AttendanceRecord) => {
+    try {
+      if (!record.plannedClockOut) {
+        throw new Error("予定退勤時間が設定されていません");
+      }
+
+      const plannedTime = new Date(record.plannedClockOut);
+      const currentTime = new Date();
+
+      // Don't allow approval of future planned times
+      if (plannedTime > currentTime) {
+        throw new Error("予定退勤時間はまだ到達していません");
+      }
+
+      if (!window.confirm("予定退勤時間を実際の退勤時間として承認しますか？")) {
+        return;
+      }
+
+      await onApprovePlannedClockOut?.(record);
+    } catch (error) {
+      console.error("Approve planned clock out failed:", error);
+      alert(error instanceof Error ? error.message : "承認に失敗しました");
+    }
   };
 
   const getStatus = (record: AttendanceRecord) => {
@@ -183,11 +316,58 @@ export default function AttendanceHistory({
     }
   };
 
+  const formatMonth = (date: Date) => {
+    return date.toLocaleDateString("ja-JP", { year: "numeric", month: "long" });
+  };
+
+  const handlePreviousMonth = () => {
+    onMonthChange(
+      new Date(selectedMonth.getFullYear(), selectedMonth.getMonth() - 1, 1),
+    );
+  };
+
+  const handleNextMonth = () => {
+    const nextMonth = new Date(
+      selectedMonth.getFullYear(),
+      selectedMonth.getMonth() + 1,
+      1,
+    );
+    if (nextMonth <= new Date()) {
+      onMonthChange(nextMonth);
+    }
+  };
+
   return (
     <div className="mt-8">
-      <h3 className="mb-4 text-xl font-semibold text-gray-800">
-        {UI_MESSAGES.HISTORY_TITLE}
-      </h3>
+      <div className="mb-6 flex items-center justify-between">
+        <h3 className="text-xl font-semibold text-gray-800">
+          {UI_MESSAGES.HISTORY_TITLE}
+        </h3>
+        <div className="flex items-center space-x-4">
+          <button
+            onClick={handlePreviousMonth}
+            className="rounded-md p-2 text-gray-600 hover:bg-gray-100"
+          >
+            ←
+          </button>
+          <span className="min-w-[120px] text-center font-medium">
+            {formatMonth(selectedMonth)}
+          </span>
+          <button
+            onClick={handleNextMonth}
+            className="rounded-md p-2 text-gray-600 hover:bg-gray-100 disabled:opacity-50"
+            disabled={
+              new Date(
+                selectedMonth.getFullYear(),
+                selectedMonth.getMonth() + 1,
+                1,
+              ) > new Date()
+            }
+          >
+            →
+          </button>
+        </div>
+      </div>
 
       {error && (
         <div className="mb-4 rounded-md border border-red-200 bg-red-50 p-4">
@@ -200,7 +380,7 @@ export default function AttendanceHistory({
           <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-t-2 border-indigo-500"></div>
           <p className="ml-2 text-gray-600">{UI_MESSAGES.LOADING_HISTORY}</p>
         </div>
-      ) : !records?.length ? (
+      ) : !filteredRecords?.length ? (
         <div className="py-8 text-center">
           <p className="text-gray-500">{UI_MESSAGES.NO_RECORDS}</p>
         </div>
@@ -367,7 +547,7 @@ export default function AttendanceHistory({
                             {!record.clockOut && record.plannedClockOut && (
                               <button
                                 onClick={() =>
-                                  onApprovePlannedClockOut?.(record)
+                                  handleApprovePlannedClockOut(record)
                                 }
                                 className="rounded bg-green-100 px-2 py-1 text-xs font-medium text-green-800 hover:bg-green-200"
                                 title="予定退勤時間を実際の退勤時間として承認します"
@@ -382,7 +562,7 @@ export default function AttendanceHistory({
                               編集
                             </button>
                             <button
-                              onClick={() => onDelete?.(record)}
+                              onClick={() => handleDelete(record)}
                               className="rounded bg-red-100 px-2 py-1 text-xs font-medium text-red-800 hover:bg-red-200"
                             >
                               削除
