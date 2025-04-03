@@ -1,383 +1,190 @@
-import { formatTime, formatDate, calculateDuration } from "@/lib/date-utils";
+import { useState, useEffect } from "react";
 import { ATTENDANCE } from "@/lib/constants/attendance";
-import { AttendanceState } from "@/app/types/attendance";
-import { useState, useEffect, useRef, useCallback } from "react";
 
 interface CurrentStatusProps {
-  currentTime: Date | null;
-  attendanceState: AttendanceState;
-  onClockAction: (
-    action: (typeof ATTENDANCE.CLOCK_ACTIONS)[keyof typeof ATTENDANCE.CLOCK_ACTIONS],
-    plannedClockOut?: string,
-  ) => void;
-  hasActiveRecord: boolean;
+  isActive: boolean;
   isLoading: boolean;
+  clockInTime?: string;
+  onClockAction: (
+    action:
+      | typeof ATTENDANCE.CLOCK_ACTIONS.IN
+      | typeof ATTENDANCE.CLOCK_ACTIONS.OUT,
+    plannedClockOut?: string,
+    breakMinutes?: number,
+  ) => void;
 }
 
 /**
  * Displays the attendance status and allows for clock in/out actions
  *
- * @param currentTime - The current time
- * @param attendanceState - The attendance state
- * @param onClockAction - The handler for clock in/out actions
+ * @param isActive - Whether the user is currently clocked in
+ * @param isLoading - Indicates if the component is loading
+ * @param clockInTime - The time user clocked in, if active
+ * @param onClockAction - The handler for clock in/out actions, requires plannedClockOut when clocking in
  */
-export default function CurrentStatus({
-  currentTime,
-  attendanceState: { status, lastClockIn, error },
-  onClockAction,
-  hasActiveRecord,
+export function CurrentStatus({
+  isActive,
   isLoading,
+  clockInTime,
+  onClockAction,
 }: CurrentStatusProps) {
   const { UI_MESSAGES, CLOCK_ACTIONS } = ATTENDANCE;
-  const timeInputRef = useRef<HTMLInputElement>(null);
-  const dateInputRef = useRef<HTMLInputElement>(null);
-  const breakInputRef = useRef<HTMLInputElement>(null);
-
-  // Set the default planned clock out time and date
-  const getDefaultPlannedClockOut = useCallback(() => {
-    if (!currentTime) return { time: "", date: "" };
-
-    // Create dates in JST
-    const defaultTime = new Date(
-      currentTime.toLocaleString("en-US", { timeZone: "Asia/Tokyo" }),
-    );
-    defaultTime.setHours(defaultTime.getHours() + 8);
-
-    const currentDate = new Date(
-      currentTime.toLocaleString("en-US", { timeZone: "Asia/Tokyo" }),
-    );
-
-    // If the planned time crosses to the next day, adjust the date
-    if (defaultTime.getDate() !== currentDate.getDate()) {
-      const nextDay = new Date(
-        currentTime.toLocaleString("en-US", { timeZone: "Asia/Tokyo" }),
-      );
-      nextDay.setDate(nextDay.getDate() + 1);
-      return {
-        time: defaultTime.toLocaleString("en-US", {
-          hour: "2-digit",
-          minute: "2-digit",
-          hour12: false,
-          timeZone: "Asia/Tokyo",
-        }),
-        date: nextDay.toLocaleDateString("en-CA", { timeZone: "Asia/Tokyo" }), // YYYY-MM-DD format
-      };
-    }
-
-    return {
-      time: defaultTime.toLocaleString("en-US", {
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: false,
-        timeZone: "Asia/Tokyo",
-      }),
-      date: currentDate.toLocaleDateString("en-CA", { timeZone: "Asia/Tokyo" }), // YYYY-MM-DD format
-    };
-  }, [currentTime]);
-
-  const [plannedClockOut, setPlannedClockOut] = useState(
-    getDefaultPlannedClockOut().time,
-  );
-  const [plannedClockOutDate, setPlannedClockOutDate] = useState(
-    getDefaultPlannedClockOut().date,
-  );
+  const [currentTime, setCurrentTime] = useState<string>("");
+  const [plannedClockOut, setPlannedClockOut] = useState("");
   const [breakMinutes, setBreakMinutes] = useState(0);
-  const [isValidTime, setIsValidTime] = useState(true);
-  const [timeError, setTimeError] = useState("");
+  const [mounted, setMounted] = useState(false);
 
-  // Update plannedClockOutDate when currentTime changes
+  // Update current time every second after component is mounted
   useEffect(() => {
-    if (currentTime) {
-      const defaultPlannedTime = getDefaultPlannedClockOut();
-      setPlannedClockOutDate(defaultPlannedTime.date);
-      setPlannedClockOut(defaultPlannedTime.time);
-    }
-  }, [currentTime, getDefaultPlannedClockOut]);
+    setMounted(true);
+    const updateCurrentTime = () => {
+      const now = new Date();
+      setCurrentTime(now.toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" }));
+    };
 
-  const validatePlannedTime = (
-    date: string,
-    time: string,
-  ): { isValid: boolean; error: string } => {
-    if (!currentTime) return { isValid: true, error: "" };
-    if (!time)
-      return { isValid: false, error: "予定退勤時間を入力してください" };
+    // Initial update
+    updateCurrentTime();
 
-    const plannedDateTime = new Date(date);
-    const [hours, minutes] = time.split(":").map(Number);
-    plannedDateTime.setHours(hours, minutes);
+    // Set up interval for updates
+    const interval = setInterval(updateCurrentTime, 1000);
 
-    const durationMinutes =
-      (plannedDateTime.getTime() - currentTime.getTime()) / (1000 * 60);
+    return () => clearInterval(interval);
+  }, []);
 
-    if (durationMinutes <= 0) {
-      return {
-        isValid: false,
-        error: "予定退勤時間は現在時刻より後の時間を指定してください",
-      };
+  const handleClockIn = async () => {
+    if (!plannedClockOut) {
+      alert("予定退勤時間を設定してください");
+      return;
     }
 
-    return { isValid: true, error: "" };
-  };
+    // Validate planned clock out time
+    const [hours, minutes] = plannedClockOut.split(":");
+    const plannedTime = new Date();
+    plannedTime.setHours(parseInt(hours, 10), parseInt(minutes, 10), 0, 0);
+    if (plannedTime <= new Date()) {
+      alert("予定退勤時刻は現在時刻より後に設定してください");
+      return;
+    }
 
-  const handleTimeChange = () => {
-    if (!timeInputRef.current) return;
-
-    const newTime = timeInputRef.current.value;
-    setPlannedClockOut(newTime);
-
-    if (currentTime && newTime) {
-      const currentDate = new Date(currentTime);
-      const [hours, minutes] = newTime.split(":").map(Number);
-      const selectedDateTime = new Date(plannedClockOutDate);
-      selectedDateTime.setHours(hours, minutes);
-
-      const durationMinutes =
-        (selectedDateTime.getTime() - currentDate.getTime()) / (1000 * 60);
-
-      if (durationMinutes < 0) {
-        const nextDay = new Date(plannedClockOutDate);
-        nextDay.setDate(nextDay.getDate() + 1);
-        const nextDayStr = nextDay.toISOString().split("T")[0];
-        setPlannedClockOutDate(nextDayStr);
-        if (dateInputRef.current) {
-          dateInputRef.current.value = nextDayStr;
-        }
-
-        const validation = validatePlannedTime(nextDayStr, newTime);
-        setIsValidTime(validation.isValid);
-        setTimeError(validation.error);
-        return;
-      }
-
-      const validation = validatePlannedTime(plannedClockOutDate, newTime);
-      setIsValidTime(validation.isValid);
-      setTimeError(validation.error);
-    } else {
-      setIsValidTime(false);
-      setTimeError("予定退勤時間を入力してください");
+    try {
+      await onClockAction(CLOCK_ACTIONS.IN, plannedClockOut, breakMinutes);
+    } catch (error) {
+      console.error("Clock in failed:", error);
+      alert(error instanceof Error ? error.message : "エラーが発生しました");
     }
   };
 
-  const handleDateChange = () => {
-    if (!dateInputRef.current) return;
-
-    const newDate = dateInputRef.current.value;
-    setPlannedClockOutDate(newDate);
-
-    if (plannedClockOut && currentTime) {
-      const validation = validatePlannedTime(newDate, plannedClockOut);
-      setIsValidTime(validation.isValid);
-      setTimeError(validation.error);
+  const handleClockOut = async () => {
+    try {
+      await onClockAction(CLOCK_ACTIONS.OUT, undefined, breakMinutes);
+    } catch (error) {
+      console.error("Clock out failed:", error);
+      alert(error instanceof Error ? error.message : "エラーが発生しました");
     }
   };
 
-  const handleBreakMinutesChange = (value: number) => {
-    if (value < 0 || value > 999) return;
-    setBreakMinutes(value);
-    if (breakInputRef.current) {
-      breakInputRef.current.value = value.toString();
-    }
-  };
-
-  // Calculate planned duration considering both date and time
-  const calculatePlannedDuration = (endTime: string) => {
-    if (!currentTime || !endTime) return "";
-    const end = new Date(
-      plannedClockOutDate || currentTime.toISOString().split("T")[0],
-    );
-    const [hours, minutes] = endTime.split(":").map(Number);
-    end.setHours(hours, minutes);
-    const start = new Date(currentTime);
-
-    const durationMinutes =
-      (end.getTime() - start.getTime()) / (1000 * 60) - breakMinutes;
-    return durationMinutes.toString();
-  };
-
-  const formatDuration = (hours: number) => {
-    const hoursStr = hours.toFixed(1);
-    return `約${hoursStr}h`;
-  };
-
-  const isPlannedTimeValid = () => {
-    if (!currentTime || !plannedClockOut || !plannedClockOutDate) return false;
-    const plannedDateTime = new Date(
-      `${plannedClockOutDate}T${plannedClockOut}:00`,
-    );
-    return plannedDateTime.getTime() > currentTime.getTime();
-  };
+  // Don't render anything until after first mount to prevent hydration mismatch
+  if (!mounted) {
+    return null;
+  }
 
   return (
-    <div className="mb-8">
-      <h3 className="mb-4 text-lg font-medium text-gray-700">
+    <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+      <h2 className="text-xl font-bold text-gray-900">
         {UI_MESSAGES.CURRENT_STATUS}
-      </h3>
-      <div className="mb-6">
-        <div className="mb-4 text-center">
-          <p className="text-gray-600">{UI_MESSAGES.CURRENT_TIME}</p>
-          {currentTime && (
-            <>
-              <p className="text-2xl font-bold">{formatTime(currentTime)}</p>
-              <p className="text-gray-500">{formatDate(currentTime)}</p>
-            </>
-          )}
-        </div>
+      </h2>
 
-        {status === "clocked-in" && lastClockIn && (
-          <div className="mb-4 rounded-md border border-green-200 bg-green-50 p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-medium text-green-800">
-                  {UI_MESSAGES.CURRENTLY_WORKING}
-                </p>
-                <p className="text-green-600">
-                  {UI_MESSAGES.START_TIME}: {formatTime(lastClockIn)} (
-                  {calculateDuration(lastClockIn)})
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {error && (
-          <div className="mb-4 rounded-md border border-red-200 bg-red-50 p-4">
-            <p className="text-red-800">{error}</p>
-          </div>
+      <div className="mt-6 space-y-2">
+        <p className="text-lg text-gray-700">
+          <span className="font-medium">現在時刻:</span>{" "}
+          <span className="font-mono">{currentTime}</span>
+        </p>
+        {isActive && clockInTime && (
+          <p className="text-lg text-gray-700">
+            <span className="font-medium">出勤時刻:</span>{" "}
+            <span className="font-mono">
+              {new Date(clockInTime).toLocaleString("ja-JP", {
+                timeZone: "Asia/Tokyo",
+              })}
+            </span>
+          </p>
         )}
       </div>
 
-      <div className="flex flex-col items-center justify-center gap-4">
-        {status === "idle" && (
-          <div className="mb-4 w-full max-w-[340px]">
-            <label
-              htmlFor="plannedClockOut"
-              className="mb-2 block text-sm font-medium text-gray-700"
-            >
-              予定退勤時間
-            </label>
-            <div className="flex gap-2">
-              <input
-                type="date"
-                id="plannedClockOutDate"
-                value={plannedClockOutDate}
-                onChange={handleDateChange}
-                min={currentTime ? currentTime.toISOString().split("T")[0] : ""}
-                className="w-[180px] rounded-md border-gray-300 py-1.5 text-gray-700 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                required
-                ref={dateInputRef}
-              />
-              <div className="relative flex-1">
+      <div className="mt-8 flex flex-col items-center">
+        {!isActive && (
+          <div className="mb-6 w-full max-w-[240px] space-y-4">
+            <div>
+              <label
+                htmlFor="plannedClockOut"
+                className="block text-sm font-medium text-gray-700"
+              >
+                予定退勤時間
+              </label>
+              <div className="mt-1">
                 <input
                   type="time"
                   id="plannedClockOut"
                   value={plannedClockOut}
-                  onChange={handleTimeChange}
-                  className={`block w-full rounded-md py-1.5 pr-14 text-gray-700 shadow-sm focus:ring-indigo-500 sm:text-sm ${
-                    isValidTime
-                      ? "border-gray-300 focus:border-indigo-500"
-                      : "border-red-300 focus:border-red-500"
-                  }`}
+                  onChange={(e) => setPlannedClockOut(e.target.value)}
+                  className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 disabled:cursor-not-allowed disabled:bg-gray-100 sm:text-sm"
                   required
-                  ref={timeInputRef}
+                  disabled={isLoading}
+                  placeholder="HH:MM"
                 />
-                {plannedClockOut && (
-                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
-                    <span className="text-xs tabular-nums text-gray-500">
-                      {formatDuration(
-                        parseInt(calculatePlannedDuration(plannedClockOut)) /
-                          60,
-                      )}
-                    </span>
-                  </div>
-                )}
               </div>
+              <p className="mt-1 text-sm text-gray-500">
+                ※ 出勤前に予定退勤時間を設定してください
+              </p>
             </div>
-            <div className="mt-2">
+
+            <div>
               <label
                 htmlFor="breakMinutes"
-                className="mb-2 block text-sm font-medium text-gray-700"
+                className="block text-sm font-medium text-gray-700"
               >
-                休憩時間
+                休憩時間 (分)
               </label>
-              <div className="flex items-center gap-2">
+              <div className="mt-1">
                 <input
                   type="number"
+                  id="breakMinutes"
+                  value={breakMinutes}
+                  onChange={(e) =>
+                    setBreakMinutes(Math.max(0, parseInt(e.target.value) || 0))
+                  }
+                  className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 disabled:cursor-not-allowed disabled:bg-gray-100 sm:text-sm"
                   min="0"
                   max="999"
-                  value={breakMinutes}
-                  onChange={() => {
-                    if (!breakInputRef.current) return;
-                    const value = Math.min(
-                      999,
-                      Math.max(
-                        0,
-                        parseInt(breakInputRef.current.value || "0") || 0,
-                      ),
-                    );
-                    handleBreakMinutesChange(value);
-                  }}
-                  className={`w-20 rounded-md border-gray-300 text-center text-sm`}
-                  placeholder="0"
-                  ref={breakInputRef}
+                  disabled={isLoading}
                 />
-                <span className="text-sm text-gray-500">分</span>
               </div>
+              <p className="mt-1 text-sm text-gray-500">
+                ※ 予定休憩時間を設定してください
+              </p>
             </div>
-            <p className="mt-1 text-sm">
-              {!isValidTime && timeError ? (
-                <span className="text-red-600">{timeError}</span>
-              ) : (
-                <span className="text-xs text-gray-500">
-                  未入力時は約8時間で自動設定
-                </span>
-              )}
-            </p>
           </div>
         )}
 
-        <button
-          type="button"
-          className={`mx-auto max-w-[200px] rounded-md px-4 py-2 text-sm font-medium text-white ${
-            !isValidTime ||
-            !plannedClockOut ||
-            !isPlannedTimeValid() ||
-            hasActiveRecord ||
-            isLoading
-              ? "cursor-not-allowed bg-gray-400"
-              : "bg-indigo-600 hover:bg-indigo-700"
-          }`}
-          onClick={() => {
-            console.log("[Debug] Button disabled state:", {
-              isValidTime,
-              plannedClockOut,
-              isPlannedTimeValid: isPlannedTimeValid(),
-              hasActiveRecord,
-              isLoading,
-            });
-            onClockAction(
-              CLOCK_ACTIONS.IN,
-              `${plannedClockOutDate}T${plannedClockOut}`,
-            );
-          }}
-          disabled={
-            !isValidTime ||
-            !plannedClockOut ||
-            !isPlannedTimeValid() ||
-            hasActiveRecord ||
-            isLoading
-          }
-          title={
-            hasActiveRecord
-              ? "進行中の勤怠記録があるため、新しく出勤することはできません"
-              : isLoading
-                ? "読み込み中..."
-                : !isValidTime
-                  ? timeError
-                  : undefined
-          }
-        >
-          {isLoading ? "読み込み中..." : UI_MESSAGES.CLOCK_IN}
-        </button>
+        <div className="w-full max-w-[240px]">
+          {!isActive ? (
+            <button
+              onClick={handleClockIn}
+              disabled={isLoading || !plannedClockOut}
+              className="w-full rounded-md bg-indigo-600 py-2 text-base font-medium text-white transition-colors hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-indigo-600"
+            >
+              {isLoading ? UI_MESSAGES.LOADING : UI_MESSAGES.CLOCK_IN}
+            </button>
+          ) : (
+            <button
+              onClick={handleClockOut}
+              disabled={isLoading}
+              className="w-full rounded-md bg-red-600 py-2 text-base font-medium text-white transition-colors hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-red-600"
+            >
+              {isLoading ? UI_MESSAGES.LOADING : UI_MESSAGES.CLOCK_OUT}
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );
