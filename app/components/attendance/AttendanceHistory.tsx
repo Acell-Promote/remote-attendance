@@ -327,12 +327,9 @@ export default function AttendanceHistory({
   };
 
   const handleNextMonth = () => {
-    const nextMonth = new Date(
-      selectedMonth.getFullYear(),
-      selectedMonth.getMonth() + 1,
-      1,
-    );
-    if (nextMonth <= new Date()) {
+    const nextMonth = new Date(selectedMonth);
+    nextMonth.setMonth(nextMonth.getMonth() + 1);
+    if (nextMonth.getTime() <= new Date().getTime()) {
       onMonthChange(nextMonth);
     }
   };
