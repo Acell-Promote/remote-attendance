@@ -20,7 +20,7 @@ export async function GET() {
       },
     });
 
-    return createApiResponse({ records });
+    return createApiResponse(records);
   } catch (error) {
     return createErrorResponse(error);
   }
